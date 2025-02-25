@@ -68,4 +68,4 @@ The application includes:
 1. **Clone the Repository**
    ```bash
    git clone <repository-url>
-   cd frontend
+   cd frontend 
