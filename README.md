@@ -9,8 +9,6 @@
 - [Pulling Latest Changes](#pulling-latest-changes)
 - [Running the Application](#running-the-application)
 - [Future Enhancements](#future-enhancements)
-- [License](#license)
-- [Contact](#contact)
 
 ---
 
@@ -198,6 +196,8 @@ This will create a new React project and set up the necessary files.
    - Log in using the provided credentials.
 
 ---
+## Current sample Login Page 
+![File Structure](./images/SampleLogin.png)
 
 ## Future Enhancements
 - Add a **real authentication system** instead of hardcoded credentials.
