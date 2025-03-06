@@ -3,6 +3,7 @@
 ## Table of Contents
 - [Project Overview](#project-overview)
 - [Features](#features)
+- [Dependencies](#dependencies)
 - [File Structure](#file-structure)
 - [Default Credentials](#default-credentials)
 - [Installation and Setup](#installation-and-setup)
@@ -15,199 +16,194 @@
 ## Project Overview
 
 ### Introduction
-This project is a web-based **Therapy Appointment Scheduler** designed to assist:
-- **Parents** who can manage appointments for their children,
-- **Students** who may also schedule or view their sessions,
-- **Doctors** who can set availability and manage bookings,
-- **Admin** who has elevated privileges to manage system-wide settings.
+This project is a web-based **Therapy Appointment Scheduler** designed for multiple user roles:
+- **Parents** who manage appointments for their children,
+- **Students** who schedule or view their sessions,
+- **Doctors** (or Therapists/Tutors) who set availability and manage bookings,
+- **Admin** who has elevated privileges for system management.
 
 The application includes:
-- A **role-based login system** with default credentials.
-- Navigation using **React Router** to load specific dashboards.
-- A clean, responsive UI that centers on simplicity and clarity.
+- A **role-based login system** with secure authentication using JWT tokens.
+- A **responsive UI** with real-time validations including email format checking and password visibility toggles.
+- A clean, modern, and minimalistic design.
 
 ---
 
 ## Features
 
-### Role-Based Login
-- Users may select **Parents**, **Students**, or **Doctors** from a dropdown.
-- A special **Admin** login is handled with a hardcoded username and password.
+### Role-Based Authentication
+- **Registration & Login:**  
+  Users register by providing their email (as the username), password, and role (Parent, Therapist/Tutor, or Student). The admin account is preset in the database.
+- **Secure Authentication:**  
+  Passwords are hashed using bcrypt and JWT tokens are generated upon successful login.
+- **Role-Based Navigation:**  
+  After login, users are redirected to their respective dashboards based on their role (Parent, Doctor/ Therapist, Student, or Admin).
 
-### Appointment Booking
-- Users can view and book therapy sessions based on available slots.
-- Doctors can define their availability.
-- Parents and students can cancel or reschedule appointments.
+### User-Friendly Interface
+- **Email Format Validation:**  
+  The frontend validates the email format (except for the admin user) to ensure valid entries.
+- **Password Visibility Toggle:**  
+  An eye icon allows users to toggle password visibility while typing.
+- **Real-Time Feedback:**  
+  Error and success messages are displayed instantly during form submission.
 
-### User Management
-- Admins can manage user accounts (create, edit, delete users).
-- Role-based access ensures that each user type has specific permissions.
+---
 
-### Automated Reminders
-- Email notifications for upcoming appointments.
-- Users receive alerts for canceled or rescheduled sessions.
+## Dependencies
 
-### Patient Records Management
-- Doctors can maintain notes on therapy sessions.
-- Patients and parents can review previous session details.
+### Backend (Flask):
+- **Flask** – Lightweight web framework
+- **Flask-CORS** – For handling cross-origin requests
+- **mysql-connector-python** – MySQL database connector
+- **Flask-Bcrypt** – For secure password hashing
+- **Flask-JWT-Extended** – For JWT-based authentication
 
-### Secure Authentication
-- Integration with OAuth or JWT authentication for user security.
-- Password hashing and role-based authentication system.
+### Frontend (React):
+- **React** – UI library
+- **react-router-dom** – Routing
+- **jwt-decode** – To decode JWT tokens
+- **axios** or **fetch API** – For HTTP requests (our example uses fetch)
 
-### Reporting and Analytics
-- Admins can generate reports on appointment history.
-- Insights into session durations and frequency of therapy sessions.
-
-### Responsive UI
-- A clean and accessible UI optimized for desktop and mobile views.
+_All these libraries are open source._
 
 ---
 
 ## File Structure
 
-Below is the rough file directory structure :
+An example file structure for the project:
 
-![File Structure](./images/frontend.png)
+```
+therapy_clinic_project/
+├── backend/
+│   ├── app.py
+│   ├── requirements.txt
+├── frontend/
+│   ├── package.json
+│   ├── public/
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── LoginPage.js
+│   │   │   ├── ParentPage.js
+│   │   │   ├── StudentPage.js
+│   │   │   ├── DoctorPage.js
+│   │   │   └── AdminPage.js
+│   │   └── design/
+│   │       └── authPage.css
+├── database/
+│   ├── schema.sql
+└── README.md
+```
 
+---
 
 ## Default Credentials
 
-| Role    | Username      | Password  |
-|---------|-------------|----------|
-| Parent  | "space"    | "space"|
-| Student | "space"    | "space" |
-| Doctor  | "space"    | "space" |
-| Admin   | admin      | admin123 |
+| Role    | Username              | Password                        |
+|---------|-----------------------|---------------------------------|
+| Parent  | *Preset in DB*        | *Preset in DB*                  |
+| Student | *Preset in DB*        | *Preset in DB*                  |
+| Doctor  | *Preset in DB*        | *Preset in DB*                  |
+| Admin   | admin                 | admin123 (or your secure preset)|
+
+*Note:* The admin account is pre-configured in the database with a secure, hashed password.
 
 ---
 
 ## Installation and Setup
 
 ### **Prerequisites**
-Ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (version 14 or above)
-- npm (installed with Node.js)
-- [Git](https://git-scm.com/)
+- [Node.js](https://nodejs.org/) (v14 or above)
+- npm (comes with Node.js)
+- [Python 3](https://www.python.org/)
+- [MySQL](https://dev.mysql.com/downloads/mysql/)
+- Git
 
 ### **Steps to Set Up the Project**
 
-#### **If React is Not Installed (Fresh Setup)**
-If the frontend directory is missing or React is not set up, run:
-```bash
-npx create-react-app frontend
-cd frontend
-```
-This will create a new React project and set up the necessary files.
+#### **Database Setup**
 
-1. **Clone the Repository**
+1. **Start MySQL and create the database:**
+   ```bash
+   mysql -u root -p
+   ```
+   Inside MySQL shell, run:
+   ```sql
+   CREATE DATABASE therapy_clinic;
+   USE therapy_clinic;
+   ```
+   
+2. **Run the provided schema file:**
+   ```bash
+   mysql -u root -p therapy_clinic < database/schema.sql
+   ```
+
+#### **Backend Setup**
+
+1. **Clone the Repository:**
    ```bash
    git clone https://github.com/nubpz/Group4.git
-   cd Group4
+   cd Group4/backend
    ```
 
-2. **Install Dependencies for Frontend (Including React)**
+2. **Create and Activate a Virtual Environment:**
    ```bash
-   cd frontend
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install Backend Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+#### **Frontend Setup**
+
+1. **Navigate to the Frontend Folder:**
+   ```bash
+   cd ../frontend
+   ```
+
+2. **Install Frontend Dependencies:**
+   ```bash
    npm install
-   npm install react react-dom react-router-dom axios dotenv @mui/material @mui/icons-material
-   ```
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-3. **Install Dependencies for Backend**
-   ```bash
-   cd ../backend
-   npm install
-   ```
-
-
----
-
-## Pulling Latest Changes
-
-1. **Navigate to the project directory**
-   ```bash
-   cd Group4
-   ```
-
-2. **Pull the latest code from GitHub** (Standard method)
-   ```bash
-   git pull origin main
-   ```
-   
-   **Alternative (Using Rebase)**
-   ```bash
-   git pull origin main --rebase
-   ```
-   
-   **What is Rebase?**
-   Rebase ensures your local commits are applied on top of the latest remote commits, keeping a clean commit history. It avoids unnecessary merge commits and is useful when working collaboratively. If conflicts arise during rebase, resolve them using:
-   ```bash
-   git add .
-   git rebase --continue
-   ```
-   If you prefer not to use rebase, simply stick with `git pull origin main`.
-
-3. **Reinstall dependencies (if any new packages were added)**
-   ```bash
-   cd frontend && npm install
-   cd ../backend && npm install
-   ```
-
-1. **Navigate to the project directory**
-   ```bash
-   cd Group4
-   ```
-
-2. **Pull the latest code from GitHub**
-   ```bash
-   git pull origin main
-   ```
-
-3. **Reinstall dependencies (if any new packages were added)**
-   ```bash
-   cd frontend && npm install
-   cd ../backend && npm install
+   npm install react react-dom react-router-dom jwt-decode axios
    ```
 
 ---
 
 ## Running the Application
 
-1. **Start the Backend Server**
+1. **Start the Backend Server:**
    ```bash
    cd backend
-   npm start
+   python3 app.py
    ```
-   The backend should now be running on `http://localhost:5000`.
 
-2. **Start the Frontend Server**
+2. **Start the Frontend Server:**
    ```bash
-   cd frontend
+   cd ../frontend
    npm start
    ```
-   The frontend should now be running on `http://localhost:3000`.
 
-3. **Access the Application**
-   - Open `http://localhost:3000` in your browser.
-   - Log in using the provided credentials.
+3. **Access the Application:**
+   Open your browser and navigate to `http://localhost:3000`, then log in using the default credentials.
 
 ---
-## Current sample Login Page 
-![File Structure](./images/SampleLogin.png)
 
 ## Future Enhancements
-- Add a **real authentication system** instead of hardcoded credentials.
-- Improve **form validation** with error handling.
-- Implement **API calls** to fetch and store data in a backend database.
-- Enhance UI design and animations.
-- OTHER....
+
+- **Enhanced Form Validation:**  
+  Improve both client- and server-side validations (e.g., stronger password policies, refined email regex).
+- **Admin Dashboard:**  
+  Develop a comprehensive admin panel for managing users, appointments, and system settings.
+- **Appointment Management:**  
+  Implement full appointment scheduling, cancellation, and rescheduling.
+- **Real-Time Notifications:**  
+  Add SMS or email notifications for appointment reminders.
+- **UI/UX Improvements:**  
+  Further refine design, animations, and responsiveness.
+
 ---
 
-
-
-
+This README now includes the **database activation steps** and schema file reference while keeping all dependencies and functionalities intact. Let me know if you need any further modifications! 🚀
 
