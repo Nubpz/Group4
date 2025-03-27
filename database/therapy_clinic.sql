@@ -12,3 +12,35 @@ CREATE TABLE IF NOT EXISTS users (
   verified BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Creeate the appointment table for the Therapy Clinic System
+CREATE TABLE appointments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    therapist_id INT NOT NULL,
+    appointment_time DATETIME NOT NULL,
+    status ENUM('pending', 'confirmed', 'cancelled') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES users(id),
+    FOREIGN KEY (therapist_id) REFERENCES users(id)
+);
+
+-- Create the avalibility table for the Therapy Clinic System
+CREATE TABLE availability (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    therapist_id INT NOT NULL,
+    date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    FOREIGN KEY (therapist_id) REFERENCES users(id)
+);
+
+-- Create the notification table for the Therapy Clinic System
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
