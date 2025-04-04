@@ -25,7 +25,7 @@ CREATE TABLE appointments (
     FOREIGN KEY (therapist_id) REFERENCES users(id)
 );
 
--- Create the availability table for the Therapy Clinic System
+-- Create the avalibility table for the Therapy Clinic System
 CREATE TABLE availability (
     id INT AUTO_INCREMENT PRIMARY KEY,
     therapist_id INT NOT NULL,

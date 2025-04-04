@@ -109,6 +109,7 @@ def login():
         "role": user["role"]
     })
 
+    # Generate a JWT access token with the user's data (as a JSON string) that expires in 1 hour
     access_token = create_access_token(
         identity=token_data,
         expires_delta=datetime.timedelta(hours=1)
@@ -175,16 +176,16 @@ def unverify_user(user_id):
 # --------------------
 # Book appointment (only Student or Parent)
 @app.route('/appointments/book', methods=['POST'])
-@jwt_required()
+@jwt_required()  # Ensure the user is logged in with a valid JWT
 def book_appointment():
-    user = json.loads(get_jwt_identity())
+    user = json.loads(get_jwt_identity())  # Get current user data from the token
     if user['role'] not in ['Student', 'Parent']:
         return jsonify({"message": "Only students or parents can book appointments."}), 403
 
     data = request.get_json()
     therapist_id = data.get('therapist_id')
     appointment_time = data.get('appointment_time')
-
+    # Insert a new appointment record into the database
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -199,13 +200,14 @@ def book_appointment():
 
 # Reschedule appointment
 @app.route('/appointments/reschedule', methods=['POST'])
-@jwt_required()
+@jwt_required()  # Ensure the user is authenticated
 def reschedule_appointment():
     user = json.loads(get_jwt_identity())
     data = request.get_json()
-    appointment_id = data.get('appointment_id')
-    new_time = data.get('new_time')
+    appointment_id = data.get('appointment_id')  # ID of the appointment to be changed
+    new_time = data.get('new_time')  # New datetime to reschedule to
 
+    # Update the appointment_time for the given appointment and user
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -221,12 +223,13 @@ def reschedule_appointment():
 
 # Cancel appointment
 @app.route('/appointments/cancel', methods=['POST'])
-@jwt_required()
+@jwt_required()  # Ensure the user is authenticated
 def cancel_appointment():
     user = json.loads(get_jwt_identity())
     data = request.get_json()
-    appointment_id = data.get('appointment_id')
+    appointment_id = data.get('appointment_id')  # ID of the appointment to cancel
 
+    # Set the status of the appointment to 'cancelled'
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
