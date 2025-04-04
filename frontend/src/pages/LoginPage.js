@@ -11,6 +11,8 @@ const AuthPage = () => {
     confirmPassword: '',
     role: '',
     licenseNumber: '',
+    firstName: '',
+    lastName: '',
   });
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -23,8 +25,7 @@ const AuthPage = () => {
   };
 
   const validateEmail = (email) => {
-    // Basic email regex. Adjust if needed.
-    const regex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+    const regex = /^[\w-]+@([\w-]+\.)+[\w-]{2,4}$/;
     return regex.test(email);
   };
 
@@ -33,7 +34,7 @@ const AuthPage = () => {
     setError('');
     setMessage('');
 
-    // Email format validation
+    // Validate email format (skip for Admin)
     if (values.username !== "Admin" && !validateEmail(values.username)) {
       setError('Invalid email format.');
       return;
@@ -41,6 +42,10 @@ const AuthPage = () => {
 
     // Registration-specific validations
     if (!isLogin) {
+      if (!values.firstName.trim() || !values.lastName.trim()) {
+        setError('Please enter your first and last name.');
+        return;
+      }
       if (values.password !== values.confirmPassword) {
         setError('Passwords do not match.');
         return;
@@ -60,10 +65,25 @@ const AuthPage = () => {
       : 'http://localhost:3000/auth/register';
 
     try {
+      let payload;
+      if (!isLogin) {
+        payload = {
+          username: values.username,
+          password: values.password,
+          role: values.role,
+          licenseNumber: values.role === 'Therapist/Tutor' ? values.licenseNumber : '',
+          firstName: values.firstName,
+          lastName: values.lastName,
+          verified: values.role === 'Therapist/Tutor' ? false : true,
+        };
+      } else {
+        payload = values;
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
       const data = await response.json();
 
@@ -74,18 +94,22 @@ const AuthPage = () => {
 
       if (isLogin) {
         localStorage.setItem('token', data.token);
-        setMessage(data.message || 'Logged in successfully.');
+        
         const decoded = jwtDecode(data.token);
-        // Adjust based on your token structure
-        if (decoded.sub.role === 'Parent') {
+        // Parse the JSON string stored in the token's "sub" property
+        const userInfo = JSON.parse(decoded.sub);
+
+        if (userInfo.role === 'Parent') {
           navigate('/parents');
-        } else if (decoded.sub.role === 'Therapist/Tutor') {
+        } else if (userInfo.role === 'Therapist/Tutor') {
           navigate('/doctors');
-        } else if (decoded.sub.role === 'Student') {
+        } else if (userInfo.role === 'Student') {
           navigate('/students');
-        } else if (decoded.sub.role === 'Admin') {
+        } else if (userInfo.role === 'Admin') {
           navigate('/admin');
         }
+
+        setMessage(data.message || 'Logged in successfully.');
       } else {
         setMessage(data.message || 'Registration successful.');
         setIsLogin(true);
@@ -101,6 +125,8 @@ const AuthPage = () => {
       confirmPassword: '',
       role: '',
       licenseNumber: '',
+      firstName: '',
+      lastName: '',
     });
   };
 
@@ -137,6 +163,28 @@ const AuthPage = () => {
           </div>
           {!isLogin && (
             <>
+              <div className="input-group">
+                <label>First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  placeholder="Enter your first name"
+                  value={values.firstName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="input-group">
+                <label>Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  placeholder="Enter your last name"
+                  value={values.lastName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
               <div className="input-group">
                 <label>Role</label>
                 <select name="role" value={values.role} onChange={handleChange} required>

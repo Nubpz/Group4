@@ -1,0 +1,214 @@
+.set-availability {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .set-availability h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+  }
+  
+  .set-availability h2 {
+    color: #3498db;
+    margin-bottom: 15px;
+  }
+  
+  .calendar-time-section {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    margin-bottom: 40px;
+  }
+  
+  /* Calendar styling */
+  .calendar-panel {
+    flex: 1;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .minimal-calendar {
+    width: 100%;
+    border: none !important;
+    background-color: transparent !important;
+  }
+  
+  .react-calendar__tile--active {
+    background: #3498db !important;
+    color: white !important;
+  }
+  
+  .past-date {
+    background-color: #f0f0f0 !important;
+    color: #999 !important;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+  
+  .available-date {
+    background-color: #e6f7ff !important;
+    border: 2px solid #3498db !important;
+  }
+  
+  /* Time slots styling */
+  .times-panel {
+    flex: 1;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .timezone-select {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .timezone-select label {
+    margin-right: 10px;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  
+  .timezone-select select {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    flex-grow: 1;
+  }
+  
+  .times-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .time-slot {
+    padding: 10px;
+    text-align: center;
+    background-color: #ecf0f1;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .time-slot:hover {
+    background-color: #d6eaf8;
+  }
+  
+  .selected-time {
+    background-color: #3498db;
+    color: white;
+  }
+  
+  .no-day-selected {
+    grid-column: span 3;
+    text-align: center;
+    padding: 20px;
+    color: #7f8c8d;
+    font-style: italic;
+  }
+  
+  .set-availability-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .set-availability-btn:hover {
+    background-color: #27ae60;
+  }
+  
+  .set-availability-btn:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+  }
+  
+  /* Messages styling */
+  .error-message {
+    background-color: #ffecec;
+    color: #e74c3c;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #e74c3c;
+  }
+  
+  .success-message {
+    background-color: #e7f9e7;
+    color: #27ae60;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #27ae60;
+  }
+  
+  .loading-indicator {
+    text-align: center;
+    margin: 10px 0;
+    color: #3498db;
+    font-weight: bold;
+  }
+  
+  /* Current availabilities table */
+  .current-availabilities {
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .availabilities-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+  
+  .availabilities-table th,
+  .availabilities-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .availabilities-table th {
+    background-color: #3498db;
+    color: white;
+    font-weight: bold;
+  }
+  
+  .availabilities-table tr:hover {
+    background-color: #f5f5f5;
+  }
+  
+  @media (max-width: 768px) {
+    .calendar-time-section {
+      flex-direction: column;
+    }
+    
+    .times-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .times-list {
+      grid-template-columns: 1fr;
+    }
+  }
