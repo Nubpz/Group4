@@ -1,214 +1,359 @@
+/* ================================
+   Overall Container
+================================ */
 .set-availability {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: #fff;
+  color: #333;
+}
+
+.set-availability h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  color: #2c3e50;
+}
+
+.set-availability h2 {
+  font-size: 1.75rem;
+  color: #3498db;
+  margin-bottom: 20px;
+}
+
+/* ================================
+   Messages & Loading
+================================ */
+.error-message {
+  background-color: #ffecec;
+  color: #e74c3c;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #e74c3c;
+}
+
+.success-message {
+  background-color: #e7f9e7;
+  color: #27ae60;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #27ae60;
+}
+
+.loading-indicator {
+  text-align: center;
+  margin: 10px 0;
+  color: #3498db;
+  font-weight: bold;
+}
+
+/* ================================
+   Calendar + Times Layout
+================================ */
+.calendar-time-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+@media (max-width: 768px) {
+  .calendar-time-section {
+    flex-direction: column;
+  }
+}
+
+/* ================================
+   Calendar Panel
+================================ */
+.calendar-panel {
+  flex: 1;
+  padding: 20px;
+  background-color: #fefefe;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Override default React Calendar */
+.minimal-calendar {
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+}
+
+.react-calendar {
+  width: 100%;
+  max-width: 600px;
+  background: #fff;
+  border: none;
+  box-shadow: none;
+  margin: 0 auto;
+  font-family: inherit;
+  padding: 0;
+}
+
+.react-calendar__navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  background: none;
+  border: none;
+}
+
+.react-calendar__navigation button {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.react-calendar__navigation button:hover {
+  background-color: #f2f2f2;
+}
+
+.react-calendar__month-view__weekdays {
+  text-align: center;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.react-calendar__tile {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  margin: 4px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #333;
+  transition: background 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+
+.react-calendar__tile abbr {
+  text-decoration: none;
+  font-size: inherit;
+  color: inherit;
+}
+
+.react-calendar__tile:hover {
+  background: #f0f0f0;
+  transform: scale(1.02);
+}
+
+.react-calendar__tile--active {
+  background: #3498db !important;
+  color: #fff !important;
+  border: 1px solid #2980b9 !important;
+  transform: scale(1.02);
+}
+
+.react-calendar__tile--now {
+  background: #f0f8ff;
+  border: 1px solid #cfe2f3;
+  font-weight: 600;
+}
+
+.react-calendar__month-view__days__day--neighboringMonth {
+  opacity: 0.4;
+}
+
+/* Past or custom-labeled days */
+.past-date {
+  background-color: #f0f0f0 !important;
+  color: #999 !important;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.available-date {
+  background-color: #e6f7ff !important;
+  border: 2px solid #3498db !important;
+}
+
+/* ================================
+   Times Panel
+================================ */
+.times-panel {
+  flex: 1;
+  padding: 20px;
+  background-color: #fefefe;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timezone-select {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.timezone-select label {
+  margin-right: 10px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.timezone-select select {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  flex: 1;
+}
+
+.times-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.time-slot {
+  padding: 10px;
+  text-align: center;
+  background-color: #ecf0f1;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.time-slot:hover {
+  background-color: #d6eaf8;
+  transform: scale(1.02);
+}
+
+.time-slot.selected-time {
+  background-color: #3498db;
+  color: #fff;
+}
+
+.time-slot.booked {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.no-day-selected {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 20px;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+/* Set Availability Button */
+.set-availability-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #2ecc71;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.set-availability-btn:hover {
+  background-color: #27ae60;
+}
+
+.set-availability-btn:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+/* ================================
+   Timeline for Current Availabilities
+================================ */
+.current-availabilities {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #fefefe;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.availability-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* One day "card" */
+.availability-day-card {
+  padding: 16px;
+  background-color: #fff;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.availability-day-title {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.25rem;
+  color: #2c3e50;
+}
+
+.availability-day-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.availability-slot {
+  background-color: #ecf0f1;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  color: #333;
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.2s ease;
+}
+
+.availability-slot:hover {
+  background-color: #dceef3;
+}
+
+.slot-time {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Additional responsive adjustments */
+@media (max-width: 768px) {
+  .react-calendar__tile {
+    margin: 3px;
+    height: 40px;
   }
   
   .set-availability h1 {
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 30px;
+    font-size: 2rem;
   }
   
-  .set-availability h2 {
-    color: #3498db;
-    margin-bottom: 15px;
-  }
-  
-  .calendar-time-section {
-    display: flex;
-    flex-direction: row;
-    gap: 30px;
-    margin-bottom: 40px;
-  }
-  
-  /* Calendar styling */
-  .calendar-panel {
-    flex: 1;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .minimal-calendar {
-    width: 100%;
-    border: none !important;
-    background-color: transparent !important;
-  }
-  
-  .react-calendar__tile--active {
-    background: #3498db !important;
-    color: white !important;
-  }
-  
-  .past-date {
-    background-color: #f0f0f0 !important;
-    color: #999 !important;
-    pointer-events: none;
-    opacity: 0.6;
-  }
-  
-  .available-date {
-    background-color: #e6f7ff !important;
-    border: 2px solid #3498db !important;
-  }
-  
-  /* Time slots styling */
+  .calendar-panel,
   .times-panel {
-    flex: 1;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .timezone-select {
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-  }
-  
-  .timezone-select label {
-    margin-right: 10px;
-    font-weight: bold;
-    color: #2c3e50;
-  }
-  
-  .timezone-select select {
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    font-size: 14px;
-    flex-grow: 1;
-  }
-  
-  .times-list {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
     margin-bottom: 20px;
   }
-  
-  .time-slot {
-    padding: 10px;
-    text-align: center;
-    background-color: #ecf0f1;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .time-slot:hover {
-    background-color: #d6eaf8;
-  }
-  
-  .selected-time {
-    background-color: #3498db;
-    color: white;
-  }
-  
-  .no-day-selected {
-    grid-column: span 3;
-    text-align: center;
-    padding: 20px;
-    color: #7f8c8d;
-    font-style: italic;
-  }
-  
-  .set-availability-btn {
-    width: 100%;
-    padding: 12px;
-    background-color: #2ecc71;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .set-availability-btn:hover {
-    background-color: #27ae60;
-  }
-  
-  .set-availability-btn:disabled {
-    background-color: #95a5a6;
-    cursor: not-allowed;
-  }
-  
-  /* Messages styling */
-  .error-message {
-    background-color: #ffecec;
-    color: #e74c3c;
-    padding: 10px 15px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    border-left: 4px solid #e74c3c;
-  }
-  
-  .success-message {
-    background-color: #e7f9e7;
-    color: #27ae60;
-    padding: 10px 15px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    border-left: 4px solid #27ae60;
-  }
-  
-  .loading-indicator {
-    text-align: center;
-    margin: 10px 0;
-    color: #3498db;
-    font-weight: bold;
-  }
-  
-  /* Current availabilities table */
-  .current-availabilities {
-    margin-top: 40px;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .availabilities-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-  }
-  
-  .availabilities-table th,
-  .availabilities-table td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  .availabilities-table th {
-    background-color: #3498db;
-    color: white;
-    font-weight: bold;
-  }
-  
-  .availabilities-table tr:hover {
-    background-color: #f5f5f5;
-  }
-  
-  @media (max-width: 768px) {
-    .calendar-time-section {
-      flex-direction: column;
-    }
-    
-    .times-list {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .times-list {
-      grid-template-columns: 1fr;
-    }
-  }
+}

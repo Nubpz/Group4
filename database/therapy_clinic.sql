@@ -26,14 +26,17 @@ CREATE TABLE appointments (
 );
 
 -- Create the avalibility table for the Therapy Clinic System
-CREATE TABLE availability (
+
+CREATE TABLE IF NOT EXISTS availability (
     id INT AUTO_INCREMENT PRIMARY KEY,
     therapist_id INT NOT NULL,
     date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
+    UNIQUE (therapist_id, date, start_time),
     FOREIGN KEY (therapist_id) REFERENCES users(id)
 );
+
 
 -- Create the notification table for the Therapy Clinic System
 CREATE TABLE notifications (

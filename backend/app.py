@@ -17,7 +17,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',               # Replace with your MySQL username
     'password': 'University24@',   # Replace with your MySQL password
-    'database': 'therapy_clinic', # Use the therapy_clinic database
+    'database': 'therapy_clinic',  # Use the therapy_clinic database
     'port': 3306
 }
 
@@ -39,9 +39,11 @@ def register():
     password = data.get("password")
     role = data.get("role")
     license_number = data.get("licenseNumber")  # Only for Therapist/Tutor
+    first_name = data.get("firstName")
+    last_name = data.get("lastName")
 
     # Validate required fields
-    if not username or not password or not role:
+    if not username or not password or not role or not first_name or not last_name:
         return jsonify({"message": "Missing required fields."}), 400
 
     if role == "Therapist/Tutor" and not license_number:
@@ -62,12 +64,12 @@ def register():
     verified = False if role == "Therapist/Tutor" else True
 
     insert_query = """
-      INSERT INTO users (username, password, role, license_number, verified)
-      VALUES (%s, %s, %s, %s, %s)
+      INSERT INTO users (username, password, first_name, last_name, role, license_number, verified)
+      VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
-    cursor.execute(insert_query, (username, hashed_password, role,
-                                  license_number if role == "Therapist/Tutor" else None,
-                                  verified))
+    cursor.execute(insert_query, (username, hashed_password, first_name, last_name, role,
+                                    license_number if role == "Therapist/Tutor" else None,
+                                    verified))
     conn.commit()
     cursor.close()
     conn.close()
@@ -109,7 +111,6 @@ def login():
         "role": user["role"]
     })
 
-    # Generate a JWT access token with the user's data (as a JSON string) that expires in 1 hour
     access_token = create_access_token(
         identity=token_data,
         expires_delta=datetime.timedelta(hours=1)
@@ -129,7 +130,6 @@ def dashboard():
 # --------------------
 # Admin Endpoints
 # --------------------
-# Get all users for the Admin page
 @app.route('/admin/users', methods=['GET'])
 def get_users():
     try:
@@ -143,7 +143,6 @@ def get_users():
     except Exception as e:
         return jsonify({"message": "Error fetching users", "error": str(e)}), 500
 
-# Verify a Therapist/Tutor account
 @app.route('/admin/verify/<int:user_id>', methods=['PUT'])
 def verify_user(user_id):
     try:
@@ -157,7 +156,6 @@ def verify_user(user_id):
     except Exception as e:
         return jsonify({"message": "Error verifying user", "error": str(e)}), 500
 
-# Unverify a Therapist/Tutor account
 @app.route('/admin/unverify/<int:user_id>', methods=['PUT'])
 def unverify_user(user_id):
     try:
@@ -174,18 +172,17 @@ def unverify_user(user_id):
 # --------------------
 # Appointment Endpoints
 # --------------------
-# Book appointment (only Student or Parent)
 @app.route('/appointments/book', methods=['POST'])
-@jwt_required()  # Ensure the user is logged in with a valid JWT
+@jwt_required()
 def book_appointment():
-    user = json.loads(get_jwt_identity())  # Get current user data from the token
+    user = json.loads(get_jwt_identity())
     if user['role'] not in ['Student', 'Parent']:
         return jsonify({"message": "Only students or parents can book appointments."}), 403
 
     data = request.get_json()
     therapist_id = data.get('therapist_id')
     appointment_time = data.get('appointment_time')
-    # Insert a new appointment record into the database
+
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -198,16 +195,14 @@ def book_appointment():
 
     return jsonify({"message": "Appointment booked successfully."}), 201
 
-# Reschedule appointment
 @app.route('/appointments/reschedule', methods=['POST'])
-@jwt_required()  # Ensure the user is authenticated
+@jwt_required()
 def reschedule_appointment():
     user = json.loads(get_jwt_identity())
     data = request.get_json()
-    appointment_id = data.get('appointment_id')  # ID of the appointment to be changed
-    new_time = data.get('new_time')  # New datetime to reschedule to
+    appointment_id = data.get('appointment_id')
+    new_time = data.get('new_time')
 
-    # Update the appointment_time for the given appointment and user
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -221,15 +216,13 @@ def reschedule_appointment():
 
     return jsonify({"message": "Appointment rescheduled successfully."}), 200
 
-# Cancel appointment
 @app.route('/appointments/cancel', methods=['POST'])
-@jwt_required()  # Ensure the user is authenticated
+@jwt_required()
 def cancel_appointment():
     user = json.loads(get_jwt_identity())
     data = request.get_json()
-    appointment_id = data.get('appointment_id')  # ID of the appointment to cancel
+    appointment_id = data.get('appointment_id')
 
-    # Set the status of the appointment to 'cancelled'
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -242,6 +235,96 @@ def cancel_appointment():
     conn.close()
 
     return jsonify({"message": "Appointment cancelled successfully."}), 200
+
+# --------------------
+# Availability Endpoints
+# --------------------
+@app.route('/availability', methods=['POST'])
+@jwt_required()
+def add_availability():
+    try:
+        current_user = json.loads(get_jwt_identity())
+        print("Current user (POST):", current_user)
+        if current_user["role"].lower() != "therapist/tutor":
+            return jsonify({"message": "Only therapists/tutors can set availability."}), 403
+
+        data = request.get_json()
+        date = data.get("date")
+        start_time = data.get("start_time")
+        end_time = data.get("end_time")
+
+        if not date or not start_time or not end_time:
+            return jsonify({"message": "Missing required fields (date, start_time, end_time)."}), 400
+
+        therapist_id = int(current_user["id"])
+        # Check for duplicate entry
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        check_query = """
+            SELECT * FROM availability
+            WHERE therapist_id = %s AND date = %s AND start_time = %s
+        """
+        cursor.execute(check_query, (therapist_id, date, start_time))
+        duplicate = cursor.fetchone()
+        if duplicate:
+            cursor.close()
+            conn.close()
+            return jsonify({"message": "Availability already exists for this time slot."}), 409
+
+        # Insert new availability if no duplicate exists
+        cursor = conn.cursor()
+        query = "INSERT INTO availability (therapist_id, date, start_time, end_time) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (therapist_id, date, start_time, end_time))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"message": "Availability added successfully."}), 201
+    except Exception as e:
+        print("Error in add_availability:", e)
+        return jsonify({"message": "Failed to set availability", "error": str(e)}), 500
+
+@app.route('/availability', methods=['GET'])
+@jwt_required()
+def get_availabilities():
+    try:
+        current_user = json.loads(get_jwt_identity())
+        print("Current user (GET):", current_user)
+        if current_user["role"].lower() != "therapist/tutor":
+            return jsonify({"message": "Only therapists/tutors can access availabilities."}), 403
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        therapist_id = int(current_user["id"])
+        query = "SELECT * FROM availability WHERE therapist_id = %s"
+        cursor.execute(query, (therapist_id,))
+        availabilities = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # Convert TIME and DATE values to strings for JSON serialization
+        for avail in availabilities:
+            if isinstance(avail["date"], (datetime.date, datetime.datetime)):
+                avail["date"] = avail["date"].strftime("%Y-%m-%d")
+            if isinstance(avail["start_time"], datetime.timedelta):
+                total_seconds = int(avail["start_time"].total_seconds())
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                seconds = total_seconds % 60
+                avail["start_time"] = f"{hours:02}:{minutes:02}:{seconds:02}"
+            if isinstance(avail["end_time"], datetime.timedelta):
+                total_seconds = int(avail["end_time"].total_seconds())
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                seconds = total_seconds % 60
+                avail["end_time"] = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+        if not availabilities:
+            return jsonify({"availabilities": [], "message": "No availabilities found for your account."}), 200
+
+        return jsonify({"availabilities": availabilities}), 200
+    except Exception as e:
+        print("Error in get_availabilities:", e)
+        return jsonify({"message": "Failed to fetch availabilities", "error": str(e)}), 500
 
 # --------------------
 # Run the App

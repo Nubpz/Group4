@@ -1,18 +1,117 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import './design/TherapistPage.css';
+import './design/TherapistPage.css'; 
 import axios from 'axios';
 
+// ===========================
+// Helpers for grouping & sorting
+// ===========================
+function groupAvailabilitiesByDate(avails) {
+  const grouped = {};
+  for (const slot of avails) {
+    if (!grouped[slot.date]) {
+      grouped[slot.date] = [];
+    }
+    grouped[slot.date].push(slot);
+  }
+  return grouped;
+}
+
+// Sort by start_time (HH:MM:SS)
+function sortTimes(a, b) {
+  const [hourA, minA] = a.start_time.split(':').map(Number);
+  const [hourB, minB] = b.start_time.split(':').map(Number);
+  return hourA - hourB || minA - minB;
+}
+
+// ===========================
+// Date/Time Parsing & Formatting
+// (Similar to your existing logic)
+// ===========================
+function parseLocalDate(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return { year, month, day };
+}
+
+function formatLocalDateString(dateStr) {
+  // e.g. "2025-04-05" => "4/5/2025"
+  const { year, month, day } = parseLocalDate(dateStr);
+  return `${month}/${day}/${year}`;
+}
+
+function parseLocalTime(timeStr) {
+  // e.g. "08:00:00"
+  const [hour, minute, second] = timeStr.split(':').map(Number);
+  return new Date(2000, 0, 1, hour, minute, second);
+}
+
+function formatLocalTimeString(timeStr) {
+  const dateObj = parseLocalTime(timeStr);
+  return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function convertTimeFormat(timeStr) {
+  // e.g. "8:00 am" => "08:00:00"
+  const [time, period] = timeStr.split(' ');
+  let [hours, minutes] = time.split(':');
+  if (period.toLowerCase() === 'pm' && hours !== '12') {
+    hours = parseInt(hours) + 12;
+  } else if (period.toLowerCase() === 'am' && hours === '12') {
+    hours = '00';
+  }
+  return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+}
+
+// ===========================
+// Timeline Component
+// (Group by date, render each day in a card, times in "pills")
+// ===========================
+function AvailabilityTimeline({ availabilities }) {
+  const grouped = groupAvailabilitiesByDate(availabilities);
+  const sortedDates = Object.keys(grouped).sort(); // sort date strings (e.g. 2025-04-05)
+
+  return (
+    <div className="availability-timeline">
+      {sortedDates.map((date) => {
+        // Sort the time slots
+        const slots = [...grouped[date]].sort(sortTimes);
+
+        return (
+          <div key={date} className="availability-day-card">
+            <h3 className="availability-day-title">
+              {formatLocalDateString(date)}
+            </h3>
+            <div className="availability-day-slots">
+              {slots.map((slot) => {
+                const start = formatLocalTimeString(slot.start_time);
+                const end = formatLocalTimeString(slot.end_time);
+                return (
+                  <div className="availability-slot" key={slot.id}>
+                    <span className="slot-time">
+                      {start} – {end}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const DoctorsAvailabilityPage = () => {
-  // Auto-detect system time zone
+  // Detect user’s time zone
   const defaultTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  
-  // Today's date; restrict selection from today up to two months later
+
+  // Set up date boundaries
   const today = new Date();
   const minDate = today;
   const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, today.getDate());
 
+  // State
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTimes, setSelectedTimes] = useState([]);
   const [timeZone, setTimeZone] = useState(defaultTimeZone);
@@ -21,34 +120,29 @@ const DoctorsAvailabilityPage = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Available time slots
+  // Predefined time slots
   const times = [
     "8:00 am", "9:00 am", "10:00 am", "11:00 am",
     "12:00 pm", "1:00 pm", "2:00 pm", "3:00 pm", "4:00 pm", "5:00 pm"
   ];
 
-  // Function to fetch doctor's existing availabilities
+  // ===========================
+  // Fetch Data on Mount
+  // ===========================
   useEffect(() => {
     const fetchAvailabilities = async () => {
       setLoading(true);
       setError('');
-      
       try {
-        // Get the JWT token from localStorage
         const token = localStorage.getItem('token');
-        
         if (!token) {
           setError('You must be logged in to view availability');
           setLoading(false);
           return;
         }
-        
         const response = await axios.get('http://localhost:3000/availability', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
-        
         setAvailabilities(response.data.availabilities);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch availabilities');
@@ -56,103 +150,96 @@ const DoctorsAvailabilityPage = () => {
         setLoading(false);
       }
     };
-    
     fetchAvailabilities();
   }, []);
 
-  // Convert existing availabilities to a format for highlighting on the calendar
+  // ===========================
+  // Handling Calendar & Times
+  // ===========================
+  function formatSelectedDate(dateObj) {
+    // local date => "YYYY-MM-DD"
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   const getAvailabilityDates = () => {
-    return availabilities.map(availability => {
-      // Convert the date string to a Date object
-      return new Date(availability.date);
+    // Convert each availability date to a JS Date object for tileClassName
+    return availabilities.map((av) => {
+      const { year, month, day } = parseLocalDate(av.date);
+      return new Date(year, month - 1, day);
     });
   };
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
-    setSelectedTimes([]); // Reset time selections when date changes
+    setSelectedTimes([]);
     setSuccessMessage('');
   };
 
   const handleTimeClick = (time) => {
     if (selectedTimes.includes(time)) {
-      setSelectedTimes(selectedTimes.filter(t => t !== time));
+      setSelectedTimes(selectedTimes.filter((t) => t !== time));
     } else {
       setSelectedTimes([...selectedTimes, time]);
     }
   };
 
-  // Convert time format (e.g., "8:00 am" to "08:00:00")
-  const convertTimeFormat = (timeStr) => {
-    const [time, period] = timeStr.split(' ');
-    let [hours, minutes] = time.split(':');
-    
-    if (period.toLowerCase() === 'pm' && hours !== '12') {
-      hours = parseInt(hours) + 12;
-    } else if (period.toLowerCase() === 'am' && hours === '12') {
-      hours = '00';
-    }
-    
-    return `${hours.padStart(2, '0')}:${minutes}:00`;
-  };
+  function isTimeSlotBooked(time) {
+    if (!selectedDate) return false;
+    const dateStr = formatSelectedDate(selectedDate);
+    const time24 = convertTimeFormat(time);
+    return availabilities.some(
+      (avail) => avail.date === dateStr && avail.start_time === time24
+    );
+  }
 
   const handleSetAvailability = async () => {
     if (!selectedDate) {
       setError("Please select a date first.");
       return;
     }
-    
     if (selectedTimes.length === 0) {
       setError("Please select at least one time slot.");
       return;
     }
-    
     setLoading(true);
     setError('');
-    
     try {
-      // Get the JWT token from localStorage
       const token = localStorage.getItem('token');
-      
       if (!token) {
         setError('You must be logged in to set availability');
         setLoading(false);
         return;
       }
-      
-      // Format the selected date as yyyy-mm-dd
-      const formattedDate = selectedDate.toISOString().split('T')[0];
-      
-      // For each selected time slot, create an availability entry
+      const dateStr = formatSelectedDate(selectedDate);
       for (const time of selectedTimes) {
-        // Assuming each time slot is 1 hour
+        if (isTimeSlotBooked(time)) continue; // skip duplicates
         const startTime = convertTimeFormat(time);
-        
-        // Calculate end time (1 hour later)
         const endTimeHour = parseInt(startTime.split(':')[0]) + 1;
-        const endTime = `${endTimeHour.toString().padStart(2, '0')}:00:00`;
-        
-        await axios.post('http://localhost:3000/availability', {
-          date: formattedDate,
-          start_time: startTime,
-          end_time: endTime
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        const endTime = `${String(endTimeHour).padStart(2, '0')}:00:00`;
+        await axios.post(
+          'http://localhost:3000/availability',
+          {
+            date: dateStr,
+            start_time: startTime,
+            end_time: endTime
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           }
-        });
+        );
       }
-      
-      // Refresh availabilities after setting new ones
+      // Refresh
       const response = await axios.get('http://localhost:3000/availability', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
-      
       setAvailabilities(response.data.availabilities);
-      setSuccessMessage(`Availability set for ${formattedDate} at ${selectedTimes.join(', ')}`);
+      setSuccessMessage(`Availability set for ${dateStr} at ${selectedTimes.join(', ')}`);
       setSelectedDate(null);
       setSelectedTimes([]);
     } catch (err) {
@@ -162,19 +249,23 @@ const DoctorsAvailabilityPage = () => {
     }
   };
 
+  // ===========================
+  // Render
+  // ===========================
   return (
     <div className="set-availability">
       <h1>Manage Your Availability</h1>
-      
+
       {error && <div className="error-message">{error}</div>}
       {successMessage && <div className="success-message">{successMessage}</div>}
       {loading && <div className="loading-indicator">Loading...</div>}
-      
+
+      {/* Calendar & Time Slots */}
       <div className="calendar-time-section">
         {/* Calendar Panel */}
         <div className="calendar-panel">
           <h2>Select Date</h2>
-          <Calendar 
+          <Calendar
             onChange={handleDateChange}
             value={selectedDate}
             minDate={minDate}
@@ -184,25 +275,28 @@ const DoctorsAvailabilityPage = () => {
             className="minimal-calendar"
             tileClassName={({ date, view }) => {
               if (view === 'month') {
-                // Disable past dates
-                if (date < new Date().setHours(0,0,0,0)) {
+                // Past
+                if (date < new Date().setHours(0, 0, 0, 0)) {
                   return 'past-date';
                 }
-                
-                // Highlight dates with existing availability
-                const availableDates = getAvailabilityDates();
-                if (availableDates.some(availableDate => 
-                  availableDate.getDate() === date.getDate() &&
-                  availableDate.getMonth() === date.getMonth() &&
-                  availableDate.getFullYear() === date.getFullYear()
-                )) {
+                // If this date is in your availabilities
+                const availabilityDates = getAvailabilityDates();
+                if (
+                  availabilityDates.some(
+                    (d) =>
+                      d.getFullYear() === date.getFullYear() &&
+                      d.getMonth() === date.getMonth() &&
+                      d.getDate() === date.getDate()
+                  )
+                ) {
                   return 'available-date';
                 }
               }
+              return null;
             }}
           />
         </div>
-        
+
         {/* Time Slots Panel */}
         <div className="times-panel">
           <h2>Select Time Slots</h2>
@@ -214,31 +308,39 @@ const DoctorsAvailabilityPage = () => {
               onChange={(e) => setTimeZone(e.target.value)}
             >
               <option value={defaultTimeZone}>{defaultTimeZone}</option>
-              <option value="America/Los_Angeles">America/Los Angeles (GMT-08:00)</option>
-              <option value="America/New_York">America/New York (GMT-05:00)</option>
-              <option value="Europe/London">Europe/London (GMT+00:00)</option>
+              <option value="America/New_York">America/New_York</option>
+              <option value="America/Los_Angeles">America/Los_Angeles</option>
+              <option value="Europe/London">Europe/London</option>
             </select>
           </div>
-          
+
           <div className="times-list">
             {selectedDate ? (
-              times.map(time => (
+              times.map((time) => (
                 <div
                   key={time}
-                  className={`time-slot ${selectedTimes.includes(time) ? 'selected-time' : ''}`}
-                  onClick={() => handleTimeClick(time)}
+                  className={`time-slot ${
+                    selectedTimes.includes(time) ? 'selected-time' : ''
+                  } ${isTimeSlotBooked(time) ? 'booked' : ''}`}
+                  onClick={() => {
+                    if (!isTimeSlotBooked(time)) {
+                      handleTimeClick(time);
+                    }
+                  }}
                 >
                   {time}
                 </div>
               ))
             ) : (
-              <p className="no-day-selected">Select a date to view available times</p>
+              <p className="no-day-selected">
+                Select a date to view available times
+              </p>
             )}
           </div>
-          
+
           {selectedDate && (
-            <button 
-              className="set-availability-btn" 
+            <button
+              className="set-availability-btn"
               onClick={handleSetAvailability}
               disabled={loading}
             >
@@ -247,29 +349,12 @@ const DoctorsAvailabilityPage = () => {
           )}
         </div>
       </div>
-      
-      {/* Display current availabilities */}
+
+      {/* Current Availabilities in a Timeline Format */}
       <div className="current-availabilities">
         <h2>Your Current Availabilities</h2>
         {availabilities.length > 0 ? (
-          <table className="availabilities-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {availabilities.map(availability => (
-                <tr key={availability.id}>
-                  <td>{new Date(availability.date).toLocaleDateString()}</td>
-                  <td>{new Date(`2000-01-01T${availability.start_time}`).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-                  <td>{new Date(`2000-01-01T${availability.end_time}`).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <AvailabilityTimeline availabilities={availabilities} />
         ) : (
           <p>No availabilities set yet.</p>
         )}
