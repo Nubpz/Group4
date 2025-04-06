@@ -1,0 +1,205 @@
+/* Overall page layout */
+.parents-page {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f0f4f8;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  
+  /* Side Menu Styling */
+  .parents-page .side-menu {
+    width: 220px;
+    background-color: #2d6a4f;
+    color: #fff;
+    padding: 20px;
+    text-align: left;
+  }
+  
+  .parents-page .greeting {
+    font-size: 16px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  .parents-page .side-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .parents-page .side-menu ul li {
+    padding: 12px;
+    margin: 8px 0;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    font-size: 16px;
+  }
+  
+  .parents-page .side-menu ul li:hover,
+  .parents-page .side-menu ul li.active {
+    background-color: #95d5b2;
+    color: #2d6a4f;
+  }
+  
+  /* Main Content Styling */
+  .parents-page .main-content {
+    flex: 1;
+    padding: 30px;
+    background-color: #f0f9f0;
+    position: relative;
+    text-align: left;
+  }
+  
+  /* Headings */
+  .parents-page .main-content h1,
+  .parents-page .main-content h2 {
+    color: #2d6a4f;
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 600;
+  }
+  
+  /* Search Box Styling */
+  .parents-page .search-box {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .parents-page .search-box input {
+    width: 300px;
+    padding: 10px 15px;
+    border: 1px solid #dcdcdc;
+    border-radius: 25px;
+    font-size: 14px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .parents-page .search-box input:focus {
+    border-color: #52b788;
+    box-shadow: 0 0 5px rgba(82, 183, 136, 0.5);
+    outline: none;
+  }
+  
+  /* Loader and Error Styles */
+  .parents-page .loader {
+    font-size: 1.2em;
+    color: #2d6a4f;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .parents-page .error {
+    background-color: #ffecec;
+    color: #e74c3c;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #e74c3c;
+  }
+  
+  .parents-page .message {
+    background-color: #e7f9e7;
+    color: #27ae60;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #27ae60;
+  }
+  
+  /* Table Styling for Accounts & Appointments */
+  .parents-page table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+  }
+  
+  .parents-page table th,
+  .parents-page table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-size: 14px;
+  }
+  
+  .parents-page table th {
+    background-color: #e9ecef;
+    font-weight: bold;
+  }
+  
+  .parents-page table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .parents-page table tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  /* Timeline-Style for Appointments */
+  .parents-page .appointments-group {
+    margin-bottom: 30px;
+    border-left: 3px solid #3498db;
+    padding-left: 15px;
+    position: relative;
+  }
+  
+  .parents-page .appointments-group h3 {
+    margin-bottom: 10px;
+    color: #2d6a4f;
+  }
+  
+  .parents-page .appointments-group::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    background-color: #3498db;
+    border-radius: 50%;
+  }
+  
+  /* Profile Tab Styling */
+  .parents-page .profile-tab {
+    padding: 20px;
+  }
+  
+  .parents-page .profile-details p {
+    margin: 10px 0;
+    font-size: 16px;
+  }
+  
+  .parents-page .profile-details button {
+    padding: 10px 15px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .parents-page .profile-details button:hover {
+    background-color: #2980b9;
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .parents-page {
+      flex-direction: column;
+    }
+    .parents-page .side-menu {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .parents-page .search-box input {
+      width: 100%;
+    }
+  }

@@ -54,9 +54,12 @@ const AdminPage = () => {
     }
   };
 
-  const verifyUser = async (userId) => {
+  const verifyUser = async (userId, role) => {
     try {
       const token = localStorage.getItem("token");
+      // Only therapists need verification actions.
+      if (role.toLowerCase() !== "therapist/tutor") return;
+      
       const response = await fetch(`http://localhost:3000/admin/verify/${userId}`, {
         method: "PUT",
         headers: {
@@ -70,11 +73,12 @@ const AdminPage = () => {
           `Failed to verify user: ${response.status} - ${response.statusText}`
         );
       await response.json();
-      const updatedUser = users.find(user => user.id === userId);
-      setMessage(`User ${updatedUser.first_name} verified.`);
+      setMessage(`User ${userId} verified.`);
       setUsers(prevUsers =>
         prevUsers.map(user =>
-          user.id === userId ? { ...user, verified: true } : user
+          user.id === userId && user.role.toLowerCase() === "therapist/tutor"
+            ? { ...user, verified: true }
+            : user
         )
       );
       setTimeout(() => setMessage(""), 3000);
@@ -84,9 +88,10 @@ const AdminPage = () => {
     }
   };
 
-  const unverifyUser = async (userId) => {
+  const unverifyUser = async (userId, role) => {
     try {
       const token = localStorage.getItem("token");
+      if (role.toLowerCase() !== "therapist/tutor") return;
       const response = await fetch(`http://localhost:3000/admin/unverify/${userId}`, {
         method: "PUT",
         headers: {
@@ -100,11 +105,12 @@ const AdminPage = () => {
           `Failed to unverify user: ${response.status} - ${response.statusText}`
         );
       await response.json();
-      const updatedUser = users.find(user => user.id === userId);
-      setMessage(`User ${updatedUser.first_name} unverified.`);
+      setMessage(`User ${userId} unverified.`);
       setUsers(prevUsers =>
         prevUsers.map(user =>
-          user.id === userId ? { ...user, verified: false } : user
+          user.id === userId && user.role.toLowerCase() === "therapist/tutor"
+            ? { ...user, verified: false }
+            : user
         )
       );
       setTimeout(() => setMessage(""), 3000);
@@ -116,39 +122,34 @@ const AdminPage = () => {
 
   const filteredUsers = users
     .filter(user => {
-      const role = (user.role || "").toLowerCase();
-      if (selectedTab === "students") return role === "student";
-      if (selectedTab === "parents") return role === "parent";
-      if (selectedTab === "therapists") return role === "therapist/tutor";
-      return false;
+      // Filter by tab selection. For "home" show all; for others, filter by role.
+      if (selectedTab === "home") return true;
+      return user.role.toLowerCase() === selectedTab;
     })
     .filter(user => {
       if (!searchTerm) return true;
       const lowerTerm = searchTerm.toLowerCase();
-      const firstName = (user.first_name || "").toLowerCase();
-      const lastName = (user.last_name || "").toLowerCase();
-      const email = (user.username || "").toLowerCase();
       return (
-        firstName.includes(lowerTerm) ||
-        lastName.includes(lowerTerm) ||
-        email.includes(lowerTerm)
+        (user.first_name || "").toLowerCase().includes(lowerTerm) ||
+        (user.last_name || "").toLowerCase().includes(lowerTerm) ||
+        (user.username || "").toLowerCase().includes(lowerTerm)
       );
     });
 
   const totalUsers = users.length;
-  const totalParents = users.filter(user => (user.role || "").toLowerCase() === "parent").length;
-  const totalStudents = users.filter(user => (user.role || "").toLowerCase() === "student").length;
-  const approvedTherapists = users.filter(user => (user.role || "").toLowerCase() === "therapist/tutor" && user.verified).length;
-  const pendingTherapists = users.filter(user => (user.role || "").toLowerCase() === "therapist/tutor" && !user.verified).length;
+  const totalParents = users.filter(user => user.role.toLowerCase() === "parent").length;
+  const totalStudents = users.filter(user => user.role.toLowerCase() === "student").length;
+  const approvedTherapists = users.filter(user => user.role.toLowerCase() === "therapist/tutor" && user.verified).length;
+  const pendingTherapists = users.filter(user => user.role.toLowerCase() === "therapist/tutor" && !user.verified).length;
   const pendingTherapistsList = users.filter(user =>
-    (user.role || "").toLowerCase() === "therapist/tutor" && !user.verified
+    user.role.toLowerCase() === "therapist/tutor" && !user.verified
   );
   const recentUsers = [...users]
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 5);
 
   const handleViewTherapists = () => {
-    setSelectedTab("therapists");
+    setSelectedTab("therapist/tutor");
   };
 
   const handleRefreshClick = () => {
@@ -163,9 +164,10 @@ const AdminPage = () => {
         <p className="greeting">{getGreeting()}</p>
         <ul>
           <li className={selectedTab === "home" ? "active" : ""} onClick={() => setSelectedTab("home")}>Home</li>
-          <li className={selectedTab === "students" ? "active" : ""} onClick={() => setSelectedTab("students")}>Students</li>
-          <li className={selectedTab === "parents" ? "active" : ""} onClick={() => setSelectedTab("parents")}>Parents</li>
-          <li className={selectedTab === "therapists" ? "active" : ""} onClick={() => setSelectedTab("therapists")}>Therapists/Tutors</li>
+          <li className={selectedTab === "parent" ? "active" : ""} onClick={() => setSelectedTab("parent")}>Parents</li>
+          <li className={selectedTab === "student" ? "active" : ""} onClick={() => setSelectedTab("student")}>Students</li>
+          <li className={selectedTab === "therapist/tutor" ? "active" : ""} onClick={() => setSelectedTab("therapist/tutor")}>Therapists/Tutors</li>
+          <li className={selectedTab === "admin" ? "active" : ""} onClick={() => setSelectedTab("admin")}>Admins</li>
         </ul>
       </div>
       <div className="main-content">
@@ -217,7 +219,7 @@ const AdminPage = () => {
         ) : (
           <>
             <h1>{selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)} List</h1>
-            {selectedTab === "therapists" && message && (
+            {selectedTab === "therapist/tutor" && message && (
               <p className="message">{message}</p>
             )}
             <div className="search-box">
@@ -253,6 +255,7 @@ const UserTable = ({ users, verifyUser, unverifyUser }) => {
         <tr>
           <th>S.N.</th>
           <th>ID</th>
+          <th>Role</th>
           <th>First Name</th>
           <th>Last Name</th>
           <th>Email</th>
@@ -268,6 +271,7 @@ const UserTable = ({ users, verifyUser, unverifyUser }) => {
             <tr key={user.id}>
               <td>{index + 1}</td>
               <td>{user.id}</td>
+              <td>{user.role}</td>
               <td>{user.first_name}</td>
               <td>{user.last_name}</td>
               <td>{user.username}</td>
@@ -277,9 +281,9 @@ const UserTable = ({ users, verifyUser, unverifyUser }) => {
               <td>
                 {user.role.toLowerCase() === "therapist/tutor" ? (
                   user.verified ? (
-                    <button onClick={() => unverifyUser(user.id)}>Unverify</button>
+                    <button onClick={() => unverifyUser(user.id, user.role)}>Unverify</button>
                   ) : (
-                    <button onClick={() => verifyUser(user.id)}>Verify</button>
+                    <button onClick={() => verifyUser(user.id, user.role)}>Verify</button>
                   )
                 ) : (
                   "Verified"
@@ -289,7 +293,7 @@ const UserTable = ({ users, verifyUser, unverifyUser }) => {
           ))
         ) : (
           <tr>
-            <td colSpan="9">No users found</td>
+            <td colSpan="10">No users found</td>
           </tr>
         )}
       </tbody>
