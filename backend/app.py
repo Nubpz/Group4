@@ -37,7 +37,7 @@ def register():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
-    role = data.get("role")  # "Parent", "Student", "Therapist/Tutor", or "Admin"
+    role = data.get("role")  # Expected: "Parent", "Student", "Therapist/Tutor", or "Admin"
     license_number = data.get("licenseNumber")  # For Therapist/Tutor only
     first_name = data.get("firstName")
     last_name = data.get("lastName")
@@ -180,15 +180,14 @@ def get_users():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        # Union query to fetch users from all tables with license_number and verified flag for therapists
         query = """
-          SELECT 'Parent' AS role, id, username, first_name, last_name, created_at, NULL AS license_number, NULL AS verified FROM parents
+          SELECT 'Parent' AS role, id, username, first_name, last_name, created_at FROM parents
           UNION ALL
-          SELECT 'Student' AS role, id, username, first_name, last_name, created_at, NULL, NULL FROM students
+          SELECT 'Student' AS role, id, username, first_name, last_name, created_at FROM students
           UNION ALL
           SELECT 'Therapist/Tutor' AS role, id, username, first_name, last_name, created_at, license_number, verified FROM therapists
           UNION ALL
-          SELECT 'Admin' AS role, id, username, first_name, last_name, created_at, NULL, NULL FROM admins
+          SELECT 'Admin' AS role, id, username, first_name, last_name, created_at FROM admins
         """
         cursor.execute(query)
         users = cursor.fetchall()
@@ -318,7 +317,7 @@ def cancel_appointment():
     return jsonify({"message": "Appointment cancelled successfully."}), 200
 
 # --------------------
-# Availability Endpoints
+# Availability Endpoints (Therapists Only)
 # --------------------
 @app.route('/availability', methods=['POST'])
 @jwt_required()
@@ -391,15 +390,12 @@ def get_availabilities():
         print("Error in get_availabilities:", e)
         return jsonify({"message": "Failed to fetch availabilities", "error": str(e)}), 500
 
-
 # --------------------
-# Parents-Specific Endpoints
+# Parents Profile Endpoints
 # --------------------
-
-# Get Parent Profile
 @app.route('/parents/profile', methods=['GET'])
 @jwt_required()
-def get_parent_profile():
+def fetch_parent_profile():
     current_user = json.loads(get_jwt_identity())
     parent_id = current_user.get("id")
     conn = get_db_connection()
@@ -412,7 +408,60 @@ def get_parent_profile():
         return jsonify({"message": "Parent not found."}), 404
     return jsonify({"profile": parent}), 200
 
-# Get Children Linked to the Parent
+@app.route('/parents/profile', methods=['PUT'])
+@jwt_required()
+def modify_parent_profile():
+    current_user = json.loads(get_jwt_identity())
+    parent_id = current_user.get("id")
+    data = request.get_json()
+    new_first_name = data.get("firstName")
+    new_last_name = data.get("lastName")
+    current_password = data.get("currentPassword")
+    new_password = data.get("newPassword")
+
+    if not new_first_name or not new_last_name:
+        return jsonify({"message": "First name and last name are required."}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM parents WHERE id = %s", (parent_id,))
+    parent = cursor.fetchone()
+    if not parent:
+        cursor.close()
+        conn.close()
+        return jsonify({"message": "Parent not found."}), 404
+
+    # If a new password is provided, verify the current password
+    if new_password:
+        if not current_password:
+            cursor.close()
+            conn.close()
+            return jsonify({"message": "Current password is required to change password."}), 400
+        if not bcrypt.check_password_hash(parent["password"], current_password):
+            cursor.close()
+            conn.close()
+            return jsonify({"message": "Current password is incorrect."}), 400
+        updated_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    else:
+        updated_password = parent["password"]
+
+    update_query = """
+      UPDATE parents
+      SET first_name = %s, last_name = %s, password = %s
+      WHERE id = %s
+    """
+    cursor.execute(update_query, (new_first_name, new_last_name, updated_password, parent_id))
+    conn.commit()
+    cursor.execute("SELECT id, username, first_name, last_name, created_at FROM parents WHERE id = %s", (parent_id,))
+    updated_profile = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    return jsonify({"message": "Profile updated successfully.", "profile": updated_profile}), 200
+
+# --------------------
+# Parents Children Endpoints
+# --------------------
 @app.route('/parents/children', methods=['GET'])
 @jwt_required()
 def get_children():
@@ -420,7 +469,6 @@ def get_children():
     parent_id = current_user.get("id")
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    # Query the bridging table "parent_student" joined with the "students" table
     query = """
       SELECT s.id, s.username, s.first_name, s.last_name, s.date_of_birth
       FROM students s
@@ -433,7 +481,54 @@ def get_children():
     conn.close()
     return jsonify({"children": children}), 200
 
-# Get Appointments Booked by Parent
+@app.route('/parents/children', methods=['POST'])
+@jwt_required()
+def add_child():
+    current_user = json.loads(get_jwt_identity())
+    parent_id = current_user.get("id")
+    data = request.get_json()
+    first_name = data.get("firstName")
+    last_name = data.get("lastName")
+    date_of_birth = data.get("dateOfBirth")
+    
+    if not first_name or not last_name or not date_of_birth:
+        return jsonify({"message": "Missing required fields for child."}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        # Generate a username for the child: for example, "john.doe_3"
+        generated_username = f"{first_name.lower()}.{last_name.lower()}_{parent_id}"
+        default_password = "child123"  # In production, use a more secure approach.
+        hashed_password = bcrypt.generate_password_hash(default_password).decode('utf-8')
+        insert_query = """
+            INSERT INTO students (username, password, first_name, last_name, date_of_birth)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (generated_username, hashed_password, first_name, last_name, date_of_birth))
+        conn.commit()
+        child_id = cursor.lastrowid
+        cursor.close()
+        
+        # Insert into the bridging table "parent_student"
+        cursor = conn.cursor()
+        bridge_query = "INSERT INTO parent_student (parent_id, student_id) VALUES (%s, %s)"
+        cursor.execute(bridge_query, (parent_id, child_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        new_child = {
+            "id": child_id,
+            "username": generated_username,
+            "first_name": first_name,
+            "last_name": last_name,
+            "date_of_birth": date_of_birth
+        }
+        return jsonify({"message": "Child added successfully.", "child": new_child}), 201
+    except Exception as e:
+        return jsonify({"message": "Failed to add child", "error": str(e)}), 500
+
 @app.route('/parents/appointments', methods=['GET'])
 @jwt_required()
 def get_parent_appointments():
@@ -441,7 +536,6 @@ def get_parent_appointments():
     parent_id = current_user.get("id")
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    # Join appointments with therapists and students to get names
     query = """
       SELECT a.id, a.appointment_time, a.status,
              CONCAT(t.first_name, ' ', t.last_name) AS therapist_name,
@@ -457,6 +551,8 @@ def get_parent_appointments():
     cursor.close()
     conn.close()
     return jsonify({"appointments": appointments}), 200
+
+
 
 # --------------------
 # Run the App

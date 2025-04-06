@@ -1,4 +1,4 @@
-/* Overall page layout */
+/* Overall Parents Page Layout */
 .parents-page {
     display: flex;
     min-height: 100vh;
@@ -6,200 +6,223 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   
-  /* Side Menu Styling */
-  .parents-page .side-menu {
+  /* Side Menu */
+  .side-menu {
     width: 220px;
     background-color: #2d6a4f;
     color: #fff;
     padding: 20px;
-    text-align: left;
   }
   
-  .parents-page .greeting {
-    font-size: 16px;
-    margin-bottom: 20px;
+  .greeting {
     text-align: center;
     font-weight: bold;
+    margin-bottom: 20px;
   }
   
-  .parents-page .side-menu ul {
+  .side-menu ul {
     list-style: none;
     padding: 0;
-    margin: 0;
   }
   
-  .parents-page .side-menu ul li {
+  .side-menu ul li {
     padding: 12px;
     margin: 8px 0;
     cursor: pointer;
     border-radius: 4px;
     transition: background-color 0.3s;
-    font-size: 16px;
   }
   
-  .parents-page .side-menu ul li:hover,
-  .parents-page .side-menu ul li.active {
+  .side-menu ul li.active,
+  .side-menu ul li:hover {
     background-color: #95d5b2;
     color: #2d6a4f;
   }
   
-  /* Main Content Styling */
-  .parents-page .main-content {
+  /* Main Content Area */
+  .main-content {
     flex: 1;
     padding: 30px;
     background-color: #f0f9f0;
     position: relative;
-    text-align: left;
   }
   
-  /* Headings */
-  .parents-page .main-content h1,
-  .parents-page .main-content h2 {
-    color: #2d6a4f;
-    margin: 0 0 20px 0;
-    font-size: 24px;
-    font-weight: 600;
-  }
-  
-  /* Search Box Styling */
-  .parents-page .search-box {
-    margin-bottom: 20px;
+  /* Accounts Tab (Children Cards) */
+  .accounts-tab .accounts-header {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
   }
   
-  .parents-page .search-box input {
-    width: 300px;
-    padding: 10px 15px;
-    border: 1px solid #dcdcdc;
-    border-radius: 25px;
+  .add-child-btn {
+    background-color: #52b788;
+    color: #fff;
+    width: auto;
+    padding: 4px 8px;  /* Smaller button */
     font-size: 14px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
   }
   
-  .parents-page .search-box input:focus {
-    border-color: #52b788;
-    box-shadow: 0 0 5px rgba(82, 183, 136, 0.5);
-    outline: none;
+  .add-child-btn:hover {
+    background-color: #40916c;
   }
   
-  /* Loader and Error Styles */
-  .parents-page .loader {
-    font-size: 1.2em;
-    color: #2d6a4f;
+  .children-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .child-card {
+    background: #fff;
+    width: 140px;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     text-align: center;
-    margin-bottom: 20px;
   }
   
-  .parents-page .error {
-    background-color: #ffecec;
-    color: #e74c3c;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    border-left: 4px solid #e74c3c;
+  .child-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #52b788;
+    color: #fff;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
   }
   
-  .parents-page .message {
-    background-color: #e7f9e7;
-    color: #27ae60;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    border-left: 4px solid #27ae60;
+  .child-info p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #2d6a4f;
   }
   
-  /* Table Styling for Accounts & Appointments */
-  .parents-page table {
+  /* Appointments Tab */
+  .appointments-tab {
+    margin-top: 20px;
+  }
+  
+  .appointments-group {
+    margin-bottom: 30px;
+  }
+  
+  .appointments-table {
     width: 100%;
     border-collapse: collapse;
     background: #fff;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
   
-  .parents-page table th,
-  .parents-page table td {
-    padding: 12px 15px;
+  .appointments-table th,
+  .appointments-table td {
+    padding: 10px;
     border: 1px solid #ddd;
     text-align: left;
     font-size: 14px;
   }
   
-  .parents-page table th {
+  .appointments-table th {
     background-color: #e9ecef;
     font-weight: bold;
   }
   
-  .parents-page table tr:nth-child(even) {
-    background-color: #f9f9f9;
+  /* Profile Tab */
+  .profile-tab {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
   
-  .parents-page table tr:hover {
-    background-color: #f1f1f1;
-  }
-  
-  /* Timeline-Style for Appointments */
-  .parents-page .appointments-group {
-    margin-bottom: 30px;
-    border-left: 3px solid #3498db;
-    padding-left: 15px;
-    position: relative;
-  }
-  
-  .parents-page .appointments-group h3 {
-    margin-bottom: 10px;
+  .profile-details p {
+    margin: 8px 0;
+    font-size: 16px;
     color: #2d6a4f;
   }
   
-  .parents-page .appointments-group::before {
-    content: "";
-    position: absolute;
-    left: -7px;
-    top: 0;
-    width: 12px;
-    height: 12px;
-    background-color: #3498db;
-    border-radius: 50%;
-  }
-  
-  /* Profile Tab Styling */
-  .parents-page .profile-tab {
-    padding: 20px;
-  }
-  
-  .parents-page .profile-details p {
-    margin: 10px 0;
-    font-size: 16px;
-  }
-  
-  .parents-page .profile-details button {
-    padding: 10px 15px;
-    background-color: #3498db;
-    color: white;
+  .edit-profile-btn {
+    background-color: #52b788;
+    color: #fff;
+    padding: 8px 12px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    margin-top: 10px;
-    transition: background-color 0.3s ease;
+    margin-top: 15px;
   }
   
-  .parents-page .profile-details button:hover {
-    background-color: #2980b9;
+  .edit-profile-btn:hover {
+    background-color: #40916c;
   }
   
-  /* Responsive Adjustments */
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+  }
+  
+  .input-group {
+    margin-bottom: 15px;
+  }
+  
+  .input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  .input-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  .modal-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .cancel-btn {
+    background-color: #e74c3c;
+    color: #fff;
+  }
+  
   @media (max-width: 768px) {
     .parents-page {
       flex-direction: column;
     }
-    .parents-page .side-menu {
-      width: 100%;
-      margin-bottom: 20px;
-    }
-    .parents-page .search-box input {
+    .side-menu {
       width: 100%;
     }
   }

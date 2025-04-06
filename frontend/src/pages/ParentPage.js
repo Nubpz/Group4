@@ -9,46 +9,52 @@ const ParentsPage = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  //const [message, setMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [newChild, setNewChild] = useState({
+    firstName: "",
+    lastName: "",
+    dateOfBirth: ""
+  });
   const navigate = useNavigate();
 
-  // Fetch parent's profile on mount for greeting and profile tab
+  // Fetch parent's profile on mount (for greeting and Profile tab)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/auth");
       return;
     }
+    setLoading(true);
     fetch("http://localhost:3000/parents/profile", {
       headers: { "Authorization": `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log("Fetched profile:", data);
         if (data.profile) {
           setProfile(data.profile);
         } else {
           setError(data.message || "Failed to fetch profile data");
         }
       })
-      .catch(() => setError("Failed to fetch profile data"));
+      .catch((err) => {
+        console.error("Error fetching profile:", err);
+        setError("Failed to fetch profile data");
+      })
+      .finally(() => setLoading(false));
   }, [navigate]);
 
   // Dynamic greeting using parent's first name if available
   const getGreeting = () => {
     const hour = new Date().getHours();
-    let greeting = "";
-    if (hour < 12) greeting = "Good Morning";
-    else if (hour < 18) greeting = "Good Afternoon";
-    else greeting = "Good Evening";
-    if (profile && profile.first_name) {
-      greeting += `, ${profile.first_name}`;
-    } else {
-      greeting += ", Parent";
-    }
-    return greeting;
+    const greeting =
+      hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
+    return profile && profile.first_name
+      ? `${greeting}, ${profile.first_name}`
+      : `${greeting}, Parent`;
   };
 
-  // Fetch data for the selected tab
+  // Fetch data for selected tab (Accounts or Appointments)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -57,7 +63,6 @@ const ParentsPage = () => {
     }
     setError("");
     setLoading(true);
-
     if (selectedTab === "accounts") {
       fetch("http://localhost:3000/parents/children", {
         headers: { "Authorization": `Bearer ${token}` },
@@ -86,10 +91,88 @@ const ParentsPage = () => {
         })
         .catch(() => setError("Failed to fetch appointments"))
         .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
   }, [selectedTab, navigate]);
 
-  // Render appointments grouped by upcoming and past
+  // Modal handlers for Add Child
+  const handleAddChildClick = () => {
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setNewChild({ firstName: "", lastName: "", dateOfBirth: "" });
+  };
+
+  const handleChildInputChange = (e) => {
+    setNewChild({ ...newChild, [e.target.name]: e.target.value });
+  };
+
+  const handleAddChildSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("You must be logged in to add a child.");
+      return;
+    }
+    if (!newChild.firstName || !newChild.lastName || !newChild.dateOfBirth) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    try {
+      const response = await fetch("http://localhost:3000/parents/children", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(newChild)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message || "Failed to add child.");
+        return;
+      }
+      setChildrenData([...childrenData, data.child]);
+      closeModal();
+    } catch (err) {
+      setError("Failed to add child.");
+    }
+  };
+
+  // Render Accounts tab as children cards
+  const renderAccounts = () => (
+    <div className="accounts-tab">
+      <div className="accounts-header">
+        <h2>Children Accounts</h2>
+        <button className="add-child-btn" onClick={handleAddChildClick}>
+          Add Child
+        </button>
+      </div>
+      {childrenData.length === 0 ? (
+        <p>No children linked to your account.</p>
+      ) : (
+        <div className="children-cards">
+          {childrenData.map((child) => {
+            const initials = `${child.first_name.charAt(0)}${child.last_name.charAt(0)}`.toUpperCase();
+            return (
+              <div key={child.id} className="child-card">
+                <div className="child-avatar">{initials}</div>
+                <div className="child-info">
+                  <p className="child-name">{child.first_name} {child.last_name}</p>
+                  <p className="child-dob">{child.date_of_birth}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  // Render Appointments tab as tables grouped by upcoming and past
   const renderAppointments = () => {
     const now = new Date();
     const upcoming = appointments.filter(
@@ -99,7 +182,8 @@ const ParentsPage = () => {
       (app) => new Date(app.appointment_time) < now
     );
     return (
-      <>
+      <div className="appointments-tab">
+        <h2>Appointments</h2>
         <div className="appointments-group">
           <h3>Upcoming Appointments</h3>
           {upcoming.length === 0 ? (
@@ -158,72 +242,39 @@ const ParentsPage = () => {
             </table>
           )}
         </div>
-      </>
+      </div>
     );
   };
 
-  // Render content based on selected tab
+  // Render Profile tab content
+  const renderProfile = () => (
+    <div className="profile-tab">
+      <h2>Your Profile</h2>
+      {profile ? (
+        <div className="profile-details">
+          <p><strong>Email:</strong> {profile.username}</p>
+          <p><strong>Name:</strong> {profile.first_name} {profile.last_name}</p>
+          {profile.date_of_birth && (
+            <p><strong>Date of Birth:</strong> {profile.date_of_birth}</p>
+          )}
+          <button className="edit-profile-btn">Edit Profile</button>
+        </div>
+      ) : (
+        <p>No profile data found.</p>
+      )}
+    </div>
+  );
+
   const renderContent = () => {
     if (loading) return <p className="loader">Loading...</p>;
     if (error) return <p className="error">{error}</p>;
-
     switch (selectedTab) {
       case "accounts":
-        return (
-          <div className="accounts-tab">
-            <h2>Children Accounts</h2>
-            {childrenData.length === 0 ? (
-              <p>No children linked to your account.</p>
-            ) : (
-              <table className="children-table">
-                <thead>
-                  <tr>
-                    <th>S.N.</th>
-                    <th>Name</th>
-                    <th>Date of Birth</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {childrenData.map((child, index) => (
-                    <tr key={child.id}>
-                      <td>{index + 1}</td>
-                      <td>{child.first_name} {child.last_name}</td>
-                      <td>{child.date_of_birth}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        );
+        return renderAccounts();
       case "appointments":
-        return (
-          <div className="appointments-tab">
-            <h2>Appointments</h2>
-            {appointments.length === 0 ? (
-              <p>No appointments scheduled.</p>
-            ) : (
-              renderAppointments()
-            )}
-          </div>
-        );
+        return renderAppointments();
       case "profile":
-        return (
-          <div className="profile-tab">
-            <h2>Your Profile</h2>
-            {profile ? (
-              <div className="profile-details">
-                <p><strong>Email:</strong> {profile.username}</p>
-                <p><strong>Name:</strong> {profile.first_name} {profile.last_name}</p>
-                <p><strong>Date of Birth:</strong> {profile.date_of_birth}</p>
-                {/* Additional profile options can be added here */}
-                <button>Edit Profile</button>
-              </div>
-            ) : (
-              <p>No profile data found.</p>
-            )}
-          </div>
-        );
+        return renderProfile();
       default:
         return <p>Please select a tab.</p>;
     }
@@ -234,27 +285,65 @@ const ParentsPage = () => {
       <div className="side-menu">
         <p className="greeting">{getGreeting()}</p>
         <ul>
-          <li
-            className={selectedTab === "accounts" ? "active" : ""}
-            onClick={() => setSelectedTab("accounts")}
-          >
+          <li className={selectedTab === "accounts" ? "active" : ""} onClick={() => setSelectedTab("accounts")}>
             Accounts
           </li>
-          <li
-            className={selectedTab === "appointments" ? "active" : ""}
-            onClick={() => setSelectedTab("appointments")}
-          >
+          <li className={selectedTab === "appointments" ? "active" : ""} onClick={() => setSelectedTab("appointments")}>
             Appointments
           </li>
-          <li
-            className={selectedTab === "profile" ? "active" : ""}
-            onClick={() => setSelectedTab("profile")}
-          >
+          <li className={selectedTab === "profile" ? "active" : ""} onClick={() => setSelectedTab("profile")}>
             Profile
           </li>
         </ul>
       </div>
-      <div className="main-content">{renderContent()}</div>
+      <div className="main-content">
+        {renderContent()}
+      </div>
+      {showModal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Add Child</h2>
+            <form onSubmit={handleAddChildSubmit}>
+              <div className="input-group">
+                <label>First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  placeholder="Child's first name"
+                  value={newChild.firstName}
+                  onChange={handleChildInputChange}
+                  required
+                />
+              </div>
+              <div className="input-group">
+                <label>Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  placeholder="Child's last name"
+                  value={newChild.lastName}
+                  onChange={handleChildInputChange}
+                  required
+                />
+              </div>
+              <div className="input-group">
+                <label>Date of Birth</label>
+                <input
+                  type="date"
+                  name="dateOfBirth"
+                  value={newChild.dateOfBirth}
+                  onChange={handleChildInputChange}
+                  required
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="submit" className="modal-btn">Add Child</button>
+                <button type="button" className="modal-btn cancel-btn" onClick={closeModal}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
