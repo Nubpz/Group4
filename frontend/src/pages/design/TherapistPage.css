@@ -1,359 +1,455 @@
-/* ================================
-   Overall Container
-================================ */
-.set-availability {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background-color: #fff;
-  color: #333;
-}
+/* TherapistPage.css - Matching the admin-like styling */
 
-.set-availability h1 {
-  text-align: center;
-  font-size: 2.5rem;
-  margin-bottom: 30px;
-  color: #2c3e50;
-}
-
-.set-availability h2 {
-  font-size: 1.75rem;
-  color: #3498db;
-  margin-bottom: 20px;
-}
-
-/* ================================
-   Messages & Loading
-================================ */
-.error-message {
-  background-color: #ffecec;
-  color: #e74c3c;
-  padding: 10px 15px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  border-left: 4px solid #e74c3c;
-}
-
-.success-message {
-  background-color: #e7f9e7;
-  color: #27ae60;
-  padding: 10px 15px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  border-left: 4px solid #27ae60;
-}
-
-.loading-indicator {
-  text-align: center;
-  margin: 10px 0;
-  color: #3498db;
-  font-weight: bold;
-}
-
-/* ================================
-   Calendar + Times Layout
-================================ */
-.calendar-time-section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 30px;
-  margin-bottom: 40px;
-}
-
-@media (max-width: 768px) {
-  .calendar-time-section {
-    flex-direction: column;
-  }
-}
-
-/* ================================
-   Calendar Panel
-================================ */
-.calendar-panel {
-  flex: 1;
-  padding: 20px;
-  background-color: #fefefe;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Override default React Calendar */
-.minimal-calendar {
-  width: 100%;
-  border: none !important;
-  background: transparent !important;
-}
-
-.react-calendar {
-  width: 100%;
-  max-width: 600px;
-  background: #fff;
-  border: none;
-  box-shadow: none;
-  margin: 0 auto;
-  font-family: inherit;
+/* Reset/base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
   padding: 0;
 }
 
-.react-calendar__navigation {
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f0f4f8;
+  color: #333;
+}
+
+/* Layout container for the doctor page */
+.doctor-page {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  background: none;
-  border: none;
+  min-height: 100vh;
 }
 
-.react-calendar__navigation button {
-  background: none;
-  border: none;
-  font-size: 1rem;
+/* Side menu styles - similar to admin's side menu */
+.side-menu {
+  width: 250px;
+  background-color: #2d6a4f;
+  color: #fff;
+  padding: 30px 0;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.greeting {
+  padding: 0 20px 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: #2c3e50;
-  padding: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+}
+
+.side-menu ul {
+  list-style: none;
+}
+
+.side-menu li {
+  padding: 12px 20px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.2s ease;
+  transition: background-color 0.3s, color 0.3s;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
 }
 
-.react-calendar__navigation button:hover {
-  background-color: #f2f2f2;
+.side-menu li:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.react-calendar__month-view__weekdays {
-  text-align: center;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  color: #555;
-  margin-bottom: 8px;
+.side-menu li.active {
+  background-color: #52b788;
+  font-weight: 600;
+  position: relative;
 }
 
-.react-calendar__tile {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  margin: 4px;
-  height: 50px;
+.side-menu li.active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background-color: #fff;
+}
+
+/* Menu icon styles */
+.menu-icon {
+  margin-right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: color 0.3s;
+}
+
+.menu-label {
+  transition: font-weight 0.3s;
+}
+
+.side-menu li:hover .menu-icon,
+.side-menu li.active .menu-icon {
+  color: #fff;
+}
+
+.side-menu li:hover .menu-label,
+.side-menu li.active .menu-label {
+  font-weight: 500;
+}
+
+/* Main content offset from side menu */
+.main-content {
+  flex: 1;
+  padding: 30px;
+  margin-left: 250px; /* offset for side menu */
+  width: calc(100% - 250px);
+}
+
+/* Basic heading styling */
+.main-content h1 {
+  color: #2d6a4f;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+/* Loader / error styling (similar to admin) */
+.loader {
+  display: inline-block;
+  padding: 10px;
+  font-size: 16px;
+  color: #52b788;
+}
+
+.error-message {
+  margin: 20px 0;
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 12px 15px;
+  border-left: 4px solid #c62828;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Dashboard, Availability, etc. sections */
+.dashboard-section,
+.availability-section,
+.appointments-section,
+.profile-section {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Profile Card styles */
+.profile-info-card {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.profile-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: #52b788;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  margin-right: 20px;
+  color: white;
+}
+
+.avatar-initials {
+  font-size: 24px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.profile-header h2 {
+  margin: 0;
   color: #333;
-  transition: background 0.2s, transform 0.2s;
-  cursor: pointer;
-}
-
-.react-calendar__tile abbr {
-  text-decoration: none;
-  font-size: inherit;
-  color: inherit;
-}
-
-.react-calendar__tile:hover {
-  background: #f0f0f0;
-  transform: scale(1.02);
-}
-
-.react-calendar__tile--active {
-  background: #3498db !important;
-  color: #fff !important;
-  border: 1px solid #2980b9 !important;
-  transform: scale(1.02);
-}
-
-.react-calendar__tile--now {
-  background: #f0f8ff;
-  border: 1px solid #cfe2f3;
+  font-size: 22px;
   font-weight: 600;
 }
 
-.react-calendar__month-view__days__day--neighboringMonth {
-  opacity: 0.4;
-}
-
-/* Past or custom-labeled days */
-.past-date {
-  background-color: #f0f0f0 !important;
-  color: #999 !important;
-  pointer-events: none;
-  opacity: 0.6;
-}
-
-.available-date {
-  background-color: #e6f7ff !important;
-  border: 2px solid #3498db !important;
-}
-
-/* ================================
-   Times Panel
-================================ */
-.times-panel {
-  flex: 1;
-  padding: 20px;
-  background-color: #fefefe;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.timezone-select {
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-}
-
-.timezone-select label {
-  margin-right: 10px;
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.timezone-select select {
-  padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  flex: 1;
-}
-
-.times-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.time-slot {
-  padding: 10px;
-  text-align: center;
-  background-color: #ecf0f1;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.time-slot:hover {
-  background-color: #d6eaf8;
-  transform: scale(1.02);
-}
-
-.time-slot.selected-time {
-  background-color: #3498db;
-  color: #fff;
-}
-
-.time-slot.booked {
-  background-color: #ccc;
+.profile-subtitle {
   color: #666;
-  cursor: not-allowed;
-  pointer-events: none;
+  margin: 5px 0 0 0;
+  font-size: 14px;
 }
 
-.no-day-selected {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 20px;
-  color: #7f8c8d;
-  font-style: italic;
+.profile-details {
+  margin-bottom: 25px;
 }
 
-/* Set Availability Button */
-.set-availability-btn {
-  width: 100%;
-  padding: 12px;
-  background-color: #2ecc71;
-  color: #fff;
+.profile-detail-item {
+  display: flex;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.profile-detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  flex: 0 0 170px;
+  font-weight: 600;
+  color: #555;
+}
+
+.detail-value {
+  flex: 1;
+  color: #333;
+}
+
+/* Edit profile button */
+.edit-profile-button {
+  background-color: #52b788;
+  color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: bold;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
 }
 
-.set-availability-btn:hover {
-  background-color: #27ae60;
+.edit-profile-button:hover {
+  background-color: #40916c;
 }
 
-.set-availability-btn:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
+/* Status badges for verification status */
+.status-badge.available {
+  background-color: #e6f7ef;
+  color: #2ecc71;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-/* ================================
-   Timeline for Current Availabilities
-================================ */
-.current-availabilities {
-  margin-top: 40px;
-  padding: 20px;
-  background-color: #fefefe;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.status-badge.pending {
+  background-color: #fef3e8;
+  color: #f39c12;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-.availability-timeline {
+/* Modal overlay for profile editing */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 30px;
+  width: 600px;
+  max-width: 90%;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.profile-modal {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.modal-content h2 {
+  color: #2d6a4f;
+  margin-bottom: 15px;
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.modal-intro {
+  text-align: center;
+  color: #666;
+  margin-bottom: 25px;
+  font-size: 15px;
+}
+
+/* Form within modal */
+.profile-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* One day "card" */
-.availability-day-card {
-  padding: 16px;
-  background-color: #fff;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.availability-day-title {
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 1.25rem;
-  color: #2c3e50;
-}
-
-.availability-day-slots {
+.form-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 20px;
+  width: 100%;
 }
 
-.availability-slot {
-  background-color: #ecf0f1;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 0.95rem;
-  color: #333;
-  display: inline-flex;
-  align-items: center;
-  transition: background 0.2s ease;
+.form-row .input-group {
+  flex: 1;
 }
 
-.availability-slot:hover {
-  background-color: #dceef3;
+.input-group {
+  display: flex;
+  flex-direction: column;
 }
 
-.slot-time {
+.input-group label {
   font-weight: 600;
-  color: #2c3e50;
+  margin-bottom: 8px;
+  color: #555;
+  font-size: 14px;
 }
 
-/* Additional responsive adjustments */
+.input-group input,
+.input-group select {
+  padding: 12px 15px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  border-color: #52b788;
+  box-shadow: 0 0 5px rgba(82, 183, 136, 0.3);
+  outline: none;
+}
+
+.form-submit {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.submit-button {
+  background-color: #52b788;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  min-width: 200px;
+}
+
+.submit-button:hover {
+  background-color: #40916c;
+}
+
+.submit-button:disabled {
+  background-color: #b0b0b0;
+  cursor: not-allowed;
+}
+
+/* Error and success messages inside modal */
+.error-message,
+.success-message {
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  border-left: 4px solid #c62828;
+}
+
+.success-message {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-left: 4px solid #2e7d32;
+}
+
+/* Responsive adjustments for smaller screens */
 @media (max-width: 768px) {
-  .react-calendar__tile {
-    margin: 3px;
-    height: 40px;
+  .doctor-page {
+    flex-direction: column;
+  }
+
+  .side-menu {
+    width: 100%;
+    height: auto;
+    position: relative;
+    padding: 15px 0;
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 20px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .modal-content {
+    padding: 20px;
+    width: 90%;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
   }
   
-  .set-availability h1 {
-    font-size: 2rem;
+  .profile-avatar {
+    margin: 0 auto 15px;
   }
   
-  .calendar-panel,
-  .times-panel {
-    margin-bottom: 20px;
+  .profile-detail-item {
+    flex-direction: column;
+  }
+  
+  .detail-label {
+    margin-bottom: 5px;
   }
 }

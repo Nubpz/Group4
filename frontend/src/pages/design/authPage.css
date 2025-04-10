@@ -1,151 +1,277 @@
-/* Global Reset & Typography */
+/* Reset and base styles */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
-  height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #f0f4f8;
-  color: #2f3e46;
-}
-
-/* Logo styling (positioned at top left) */
 .logo {
   position: absolute;
   top: 20px;
   left: 20px;
+  z-index: 10; /* Ensures the logo stays on top of other elements */
 }
 
-/* Center the card in the viewport */
+/* Auth container - full screen layout */
 .auth-container {
-  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  padding: 1rem;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #f0f4f8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  position: relative;
 }
 
-/* Auth card styling with fade-in animation */
+/* Card container for auth form */
 .auth-card {
-  background: #ffffff;
-  padding: 40px;
+  background-color: #fff;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 420px;
+  padding: 30px;
   text-align: center;
-  opacity: 0;
-  transform: translateY(20px);
-  animation: fadeIn 0.6s forwards ease-in-out;
 }
 
-/* Animation keyframes */
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Heading styling */
+/* Form heading */
 .auth-card h2 {
-  font-size: 22px;
+  color: #2d6a4f;
+  margin-bottom: 20px;
+  font-size: 24px;
   font-weight: 600;
-  margin-bottom: 8px;
-  color: #1d1d1f;
 }
 
-/* Error & Message styling */
+/* Error and success messages */
+.error, .message {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
 .error {
-  color: #c0392b;
-  margin-bottom: 16px;
-  font-size: 14px;
-}
-.message {
-  color: #52b788;
-  margin-bottom: 16px;
-  font-size: 14px;
+  background-color: #ffebee;
+  color: #c62828;
 }
 
-/* Input groups */
-.input-group {
-  margin-bottom: 16px;
+.message {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* Form styles */
+form {
   text-align: left;
+}
+
+/* Input group styles - consistent for all form fields */
+.input-group {
+  margin-bottom: 20px;
+  position: relative;
 }
 
 .input-group label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  color: #333;
   font-size: 14px;
-  color: #1d1d1f;
   font-weight: 500;
 }
 
+/* Consistent styles for all input types */
 .input-group input,
 .input-group select {
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 15px;
   border: 1px solid #dcdcdc;
   border-radius: 8px;
-  font-size: 15px;
-  color: #2f3e46;
-  transition: border-color 0.3s ease;
+  font-size: 14px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fff;
+  height: 45px;
 }
 
+/* For password fields, add some right padding to make room for the icon */
+.password-group input {
+  padding-right: 45px;
+}
+
+/* Focus styles */
 .input-group input:focus,
 .input-group select:focus {
   border-color: #52b788;
+  box-shadow: 0 0 5px rgba(82, 183, 136, 0.3);
   outline: none;
 }
 
-/* Submit button styling with hover animation */
-button {
+/* Password input group specific styles */
+.password-group {
+  position: relative;
+}
+
+/* Improved icon positioning */
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  margin-top: 10px;
+}
+
+/* Forgot password link - Centered */
+.forgot-password {
+  text-align: center;
+  margin: 15px 0;
+}
+
+.forgot-password span {
+  color: #52b788;
+  cursor: pointer;
+  transition: color 0.3s;
+  font-size: 14px;
+}
+
+.forgot-password span:hover {
+  text-decoration: underline;
+  color: #40916c;
+}
+
+/* Divider line */
+.divider {
+  border-top: 1px solid #e0e0e0;
+  margin: 25px 0;
+}
+
+/* Reset instructions */
+.reset-instructions {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* Login button */
+.login-button {
   width: 100%;
-  padding: 14px 16px;
+  padding: 12px;
   background-color: #52b788;
-  color: #ffffff;
+  color: #fff;
   border: none;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.3s ease;
-  margin-top: 8px;
+  transition: background-color 0.3s ease;
+  height: 45px;
 }
 
-button:hover {
+.login-button:hover {
   background-color: #40916c;
-  transform: scale(1.02);
 }
 
-/* Toggle link styling */
-.toggle {
-  margin-top: 24px;
+/* Register button */
+.register-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #40916c; /* Slightly darker shade for contrast */
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  height: 45px;
+  display: block;
+  text-align: center;
+  margin: 15px 0;
+  text-decoration: none;
+}
+
+.register-button:hover {
+  background-color: #2d6a4f;
+}
+
+/* Role selection modal styles */
+.role-selection-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.role-selection-content {
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+}
+
+.role-selection-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #2d6a4f;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.role-selection-content p {
+  margin-bottom: 20px;
+  color: #333;
   font-size: 14px;
-  color: #6e6e73;
 }
 
-.toggle span {
-  color: #52b788;
+.role-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.role-buttons button {
+  padding: 12px 15px;
+  background-color: #52b788;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  text-decoration: underline;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  font-weight: 500;
+  height: 45px;
 }
 
-/* Password input group for eye icon */
-.input-group.password-group {
-  position: relative;
+.role-buttons button:hover {
+  background-color: #40916c;
 }
 
-.toggle-password {
-  position: absolute;
-  top: 70%;
-  right: 12px;
-  transform: translateY(-50%);
-  cursor: pointer;
-  font-size: 1.2em;
-  user-select: none;
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 20px;
+  }
+  
+  .role-selection-content {
+    width: 85%;
+    padding: 20px;
+  }
 }

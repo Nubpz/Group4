@@ -1,366 +1,443 @@
-import React, { useState, useEffect } from 'react';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
-import './design/TherapistPage.css'; 
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
+import "./design/TherapistPage.css";
+import Availability from "./Availability";
 
-// ===========================
-// Helpers for grouping & sorting
-// ===========================
-function groupAvailabilitiesByDate(avails) {
-  const grouped = {};
-  for (const slot of avails) {
-    if (!grouped[slot.date]) {
-      grouped[slot.date] = [];
+const DoctorPage = () => {
+  const [therapistInfo, setTherapistInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedTab, setSelectedTab] = useState("dashboard");
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileFormData, setProfileFormData] = useState({
+    firstName: "",
+    lastName: "",
+    gender: ""
+  });
+  const [profileSubmitting, setProfileSubmitting] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
+
+  // Menu items with icons
+  const menuItems = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <rect x="3" y="3" width="7" height="9"></rect>
+          <rect x="14" y="3" width="7" height="5"></rect>
+          <rect x="14" y="12" width="7" height="9"></rect>
+          <rect x="3" y="16" width="7" height="5"></rect>
+        </svg>
+      )
+    },
+    {
+      id: "availability",
+      label: "Availability",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      )
+    },
+    {
+      id: "appointments",
+      label: "Appointments",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <path d="M12 20h9"></path>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+      )
+    },
+    {
+      id: "profile",
+      label: "My Profile",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8
+                   a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      )
     }
-    grouped[slot.date].push(slot);
-  }
-  return grouped;
-}
-
-// Sort by start_time (HH:MM:SS)
-function sortTimes(a, b) {
-  const [hourA, minA] = a.start_time.split(':').map(Number);
-  const [hourB, minB] = b.start_time.split(':').map(Number);
-  return hourA - hourB || minA - minB;
-}
-
-// ===========================
-// Date/Time Parsing & Formatting
-// (Similar to your existing logic)
-// ===========================
-function parseLocalDate(dateStr) {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return { year, month, day };
-}
-
-function formatLocalDateString(dateStr) {
-  // e.g. "2025-04-05" => "4/5/2025"
-  const { year, month, day } = parseLocalDate(dateStr);
-  return `${month}/${day}/${year}`;
-}
-
-function parseLocalTime(timeStr) {
-  // e.g. "08:00:00"
-  const [hour, minute, second] = timeStr.split(':').map(Number);
-  return new Date(2000, 0, 1, hour, minute, second);
-}
-
-function formatLocalTimeString(timeStr) {
-  const dateObj = parseLocalTime(timeStr);
-  return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-function convertTimeFormat(timeStr) {
-  // e.g. "8:00 am" => "08:00:00"
-  const [time, period] = timeStr.split(' ');
-  let [hours, minutes] = time.split(':');
-  if (period.toLowerCase() === 'pm' && hours !== '12') {
-    hours = parseInt(hours) + 12;
-  } else if (period.toLowerCase() === 'am' && hours === '12') {
-    hours = '00';
-  }
-  return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
-}
-
-// ===========================
-// Timeline Component
-// (Group by date, render each day in a card, times in "pills")
-// ===========================
-function AvailabilityTimeline({ availabilities }) {
-  const grouped = groupAvailabilitiesByDate(availabilities);
-  const sortedDates = Object.keys(grouped).sort(); // sort date strings (e.g. 2025-04-05)
-
-  return (
-    <div className="availability-timeline">
-      {sortedDates.map((date) => {
-        // Sort the time slots
-        const slots = [...grouped[date]].sort(sortTimes);
-
-        return (
-          <div key={date} className="availability-day-card">
-            <h3 className="availability-day-title">
-              {formatLocalDateString(date)}
-            </h3>
-            <div className="availability-day-slots">
-              {slots.map((slot) => {
-                const start = formatLocalTimeString(slot.start_time);
-                const end = formatLocalTimeString(slot.end_time);
-                return (
-                  <div className="availability-slot" key={slot.id}>
-                    <span className="slot-time">
-                      {start} – {end}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-const DoctorsAvailabilityPage = () => {
-  // Detect user’s time zone
-  const defaultTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  // Set up date boundaries
-  const today = new Date();
-  const minDate = today;
-  const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, today.getDate());
-
-  // State
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTimes, setSelectedTimes] = useState([]);
-  const [timeZone, setTimeZone] = useState(defaultTimeZone);
-  const [availabilities, setAvailabilities] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-
-  // Predefined time slots
-  const times = [
-    "8:00 am", "9:00 am", "10:00 am", "11:00 am",
-    "12:00 pm", "1:00 pm", "2:00 pm", "3:00 pm", "4:00 pm", "5:00 pm"
   ];
 
-  // ===========================
-  // Fetch Data on Mount
-  // ===========================
+  // Fetch therapist info on mount
   useEffect(() => {
-    const fetchAvailabilities = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setError('You must be logged in to view availability');
-          setLoading(false);
-          return;
-        }
-        const response = await axios.get('http://localhost:3000/availability', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setAvailabilities(response.data.availabilities);
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch availabilities');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAvailabilities();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("No token found. Please log in as a therapist.");
+      setLoading(false);
+      return;
+    }
+    // Just decode to confirm we have a valid token (no need to rely on the sub data for showing the modal)
+    try {
+      const decoded = jwtDecode(token);
+      // we won't do anything with 'decoded' besides confirming it's valid
+    } catch (err) {
+      console.error("Token decode error:", err);
+      setError("Invalid token. Please log in again.");
+      setLoading(false);
+      return;
+    }
+    // Now fetch the actual profile from the server
+    fetchTherapistDetails(token);
   }, []);
 
-  // ===========================
-  // Handling Calendar & Times
-  // ===========================
-  function formatSelectedDate(dateObj) {
-    // local date => "YYYY-MM-DD"
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  const getAvailabilityDates = () => {
-    // Convert each availability date to a JS Date object for tileClassName
-    return availabilities.map((av) => {
-      const { year, month, day } = parseLocalDate(av.date);
-      return new Date(year, month - 1, day);
-    });
-  };
-
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-    setSelectedTimes([]);
-    setSuccessMessage('');
-  };
-
-  const handleTimeClick = (time) => {
-    if (selectedTimes.includes(time)) {
-      setSelectedTimes(selectedTimes.filter((t) => t !== time));
-    } else {
-      setSelectedTimes([...selectedTimes, time]);
-    }
-  };
-
-  function isTimeSlotBooked(time) {
-    if (!selectedDate) return false;
-    const dateStr = formatSelectedDate(selectedDate);
-    const time24 = convertTimeFormat(time);
-    return availabilities.some(
-      (avail) => avail.date === dateStr && avail.start_time === time24
-    );
-  }
-
-  const handleSetAvailability = async () => {
-    if (!selectedDate) {
-      setError("Please select a date first.");
-      return;
-    }
-    if (selectedTimes.length === 0) {
-      setError("Please select at least one time slot.");
-      return;
-    }
-    setLoading(true);
-    setError('');
+  const fetchTherapistDetails = async (token) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('You must be logged in to set availability');
-        setLoading(false);
-        return;
-      }
-      const dateStr = formatSelectedDate(selectedDate);
-      for (const time of selectedTimes) {
-        if (isTimeSlotBooked(time)) continue; // skip duplicates
-        const startTime = convertTimeFormat(time);
-        const endTimeHour = parseInt(startTime.split(':')[0]) + 1;
-        const endTime = `${String(endTimeHour).padStart(2, '0')}:00:00`;
-        await axios.post(
-          'http://localhost:3000/availability',
-          {
-            date: dateStr,
-            start_time: startTime,
-            end_time: endTime
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-      }
-      // Refresh
-      const response = await axios.get('http://localhost:3000/availability', {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await fetch("http://localhost:3000/therapist/profile", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
       });
-      setAvailabilities(response.data.availabilities);
-      setSuccessMessage(`Availability set for ${dateStr} at ${selectedTimes.join(', ')}`);
-      setSelectedDate(null);
-      setSelectedTimes([]);
+      if (!response.ok) throw new Error("Failed to fetch therapist details");
+      const data = await response.json();
+
+      // Save it in state
+      setTherapistInfo(data);
+      setProfileFormData({
+        firstName: data.first_name || "",
+        lastName: data.last_name || "",
+        gender: data.gender || ""
+      });
+
+      // Now that we have the server data, see if it's incomplete
+      const isIncomplete =
+        !data.first_name || !data.last_name || !data.gender;
+      if (isIncomplete) {
+        setShowProfileModal(true);
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to set availability');
+      console.error("Error fetching therapist details:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ===========================
-  // Render
-  // ===========================
-  return (
-    <div className="set-availability">
-      <h1>Manage Your Availability</h1>
+  // Profile form input changes
+  const handleProfileInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfileFormData({ ...profileFormData, [name]: value });
+  };
 
-      {error && <div className="error-message">{error}</div>}
-      {successMessage && <div className="success-message">{successMessage}</div>}
-      {loading && <div className="loading-indicator">Loading...</div>}
+  // Save profile
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    setProfileSubmitting(true);
+    setProfileError("");
+    setProfileSuccess("");
 
-      {/* Calendar & Time Slots */}
-      <div className="calendar-time-section">
-        {/* Calendar Panel */}
-        <div className="calendar-panel">
-          <h2>Select Date</h2>
-          <Calendar
-            onChange={handleDateChange}
-            value={selectedDate}
-            minDate={minDate}
-            maxDate={maxDate}
-            prev2Label={null}
-            next2Label={null}
-            className="minimal-calendar"
-            tileClassName={({ date, view }) => {
-              if (view === 'month') {
-                // Past
-                if (date < new Date().setHours(0, 0, 0, 0)) {
-                  return 'past-date';
-                }
-                // If this date is in your availabilities
-                const availabilityDates = getAvailabilityDates();
-                if (
-                  availabilityDates.some(
-                    (d) =>
-                      d.getFullYear() === date.getFullYear() &&
-                      d.getMonth() === date.getMonth() &&
-                      d.getDate() === date.getDate()
-                  )
-                ) {
-                  return 'available-date';
-                }
-              }
-              return null;
-            }}
-          />
-        </div>
+    const { firstName, lastName, gender } = profileFormData;
+    if (!firstName || !lastName || !gender) {
+      setProfileError("All fields are required");
+      setProfileSubmitting(false);
+      return;
+    }
 
-        {/* Time Slots Panel */}
-        <div className="times-panel">
-          <h2>Select Time Slots</h2>
-          <div className="timezone-select">
-            <label htmlFor="timezone">Time Zone:</label>
-            <select
-              id="timezone"
-              value={timeZone}
-              onChange={(e) => setTimeZone(e.target.value)}
-            >
-              <option value={defaultTimeZone}>{defaultTimeZone}</option>
-              <option value="America/New_York">America/New_York</option>
-              <option value="America/Los_Angeles">America/Los_Angeles</option>
-              <option value="Europe/London">Europe/London</option>
-            </select>
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setProfileError("No token found. Please log in again.");
+      setProfileSubmitting(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:3000/therapist/profile", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          gender
+        })
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Failed to update profile");
+      }
+      const updatedData = await response.json();
+      setTherapistInfo(updatedData);
+      setProfileSuccess("Profile updated successfully!");
+
+      // Dismiss modal once complete
+      setTimeout(() => {
+        setShowProfileModal(false);
+        setProfileSuccess("");
+      }, 1500);
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      setProfileError(err.message);
+    } finally {
+      setProfileSubmitting(false);
+    }
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    const name =
+      therapistInfo && therapistInfo.first_name
+        ? `Dr. ${therapistInfo.first_name}`
+        : "Doctor";
+
+    if (hour < 12) return `Good Morning, ${name}`;
+    if (hour < 17) return `Good Afternoon, ${name}`;
+    return `Good Evening, ${name}`;
+  };
+
+  // Renders each tab’s content
+  const renderMainContent = () => {
+    switch (selectedTab) {
+      case "dashboard":
+        return (
+          <div className="dashboard-section">
+            <h1>Dashboard</h1>
+            <p>Welcome to your therapist dashboard. Here you can see stats, reminders, or upcoming appointments.</p>
           </div>
-
-          <div className="times-list">
-            {selectedDate ? (
-              times.map((time) => (
-                <div
-                  key={time}
-                  className={`time-slot ${
-                    selectedTimes.includes(time) ? 'selected-time' : ''
-                  } ${isTimeSlotBooked(time) ? 'booked' : ''}`}
-                  onClick={() => {
-                    if (!isTimeSlotBooked(time)) {
-                      handleTimeClick(time);
-                    }
-                  }}
-                >
-                  {time}
+        );
+        case "availability":
+          return <Availability />;
+        
+      case "appointments":
+        return (
+          <div className="appointments-section">
+            <h1>Manage Appointments</h1>
+            <p>View and manage your appointments with students/clients.</p>
+            {/* Add your appointment logic */}
+          </div>
+        );
+      case "profile":
+        return (
+          <div className="profile-section">
+            <h1>My Profile</h1>
+            <div className="profile-info-card">
+              <div className="profile-header">
+                <div className="profile-avatar">
+                  {therapistInfo && therapistInfo.first_name && therapistInfo.last_name ? (
+                    <div className="avatar-initials">
+                      {therapistInfo.first_name.charAt(0)}
+                      {therapistInfo.last_name.charAt(0)}
+                    </div>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="40" height="40"
+                      viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="1"
+                      strokeLinecap="round" strokeLinejoin="round"
+                    >
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8
+                               a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  )}
                 </div>
-              ))
-            ) : (
-              <p className="no-day-selected">
-                Select a date to view available times
-              </p>
-            )}
+                <div>
+                  <h2>
+                    Dr. {therapistInfo?.first_name || ""}{" "}
+                    {therapistInfo?.last_name || ""}
+                  </h2>
+                  <p className="profile-subtitle">Therapist</p>
+                </div>
+              </div>
+              <div className="profile-details">
+                <div className="profile-detail-item">
+                  <span className="detail-label">Email:</span>
+                  <span className="detail-value">
+                    {therapistInfo?.username ?? "Not available"}
+                  </span>
+                </div>
+                <div className="profile-detail-item">
+                  <span className="detail-label">Gender:</span>
+                  <span className="detail-value">
+                    {therapistInfo?.gender
+                      ? therapistInfo.gender.charAt(0).toUpperCase() + therapistInfo.gender.slice(1)
+                      : "Not specified"}
+                  </span>
+                </div>
+                <div className="profile-detail-item">
+                  <span className="detail-label">Verification Status:</span>
+                  <span className="detail-value">
+                    <span
+                      className={`status-badge ${
+                        therapistInfo?.verified ? "available" : "pending"
+                      }`}
+                    >
+                      {therapistInfo?.verified ? "Verified" : "Pending Verification"}
+                    </span>
+                  </span>
+                </div>
+                <div className="profile-detail-item">
+                  <span className="detail-label">Certification Number:</span>
+                  <span className="detail-value">
+                    {therapistInfo?.cert_number ?? "Not available"}
+                  </span>
+                </div>
+              </div>
+              <button className="edit-profile-button" onClick={() => setShowProfileModal(true)}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14
+                           a2 2 0 0 0 2 2h14
+                           a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5
+                           a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z">
+                  </path>
+                </svg>
+                Edit Profile
+              </button>
+            </div>
           </div>
+        );
+      default:
+        return <div>Unknown tab selected.</div>;
+    }
+  };
 
-          {selectedDate && (
-            <button
-              className="set-availability-btn"
-              onClick={handleSetAvailability}
-              disabled={loading}
-            >
-              {loading ? 'Setting...' : 'Set Availability'}
-            </button>
+  // Modal for profile completion
+  const ProfileSetupModal = () => {
+    // If the server says we have all fields, we shouldn't show the modal
+    // but let's confirm the user can close it if needed
+    const isProfileComplete = !!(
+      therapistInfo &&
+      therapistInfo.first_name &&
+      therapistInfo.last_name &&
+      therapistInfo.gender
+    );
+
+    return (
+      <div className={`modal ${showProfileModal ? "show" : ""}`}>
+        <div className="modal-content profile-modal">
+          {isProfileComplete && (
+            <span className="close-button" onClick={() => setShowProfileModal(false)}>
+              &times;
+            </span>
           )}
+          <h2>Complete Your Profile</h2>
+          <p className="modal-intro">
+            Please provide your information to complete your therapist profile. All fields are required.
+          </p>
+          {profileError && <div className="error-message">{profileError}</div>}
+          {profileSuccess && <div className="success-message">{profileSuccess}</div>}
+
+          <form onSubmit={handleProfileSubmit} className="profile-form">
+            <div className="form-row">
+              <div className="input-group">
+                <label htmlFor="firstName">First Name*</label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={profileFormData.firstName}
+                  onChange={handleProfileInputChange}
+                  required
+                  placeholder="Enter your first name"
+                />
+              </div>
+              <div className="input-group">
+                <label htmlFor="lastName">Last Name*</label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={profileFormData.lastName}
+                  onChange={handleProfileInputChange}
+                  required
+                  placeholder="Enter your last name"
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="input-group">
+                <label htmlFor="gender">Gender*</label>
+                <select
+                  id="gender"
+                  name="gender"
+                  value={profileFormData.gender}
+                  onChange={handleProfileInputChange}
+                  required
+                >
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  {/* Add more if needed */}
+                </select>
+              </div>
+            </div>
+            <div className="form-submit">
+              <button
+                type="submit"
+                className="submit-button"
+                disabled={profileSubmitting}
+              >
+                {profileSubmitting ? "Saving..." : "Save Profile"}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
+    );
+  };
 
-      {/* Current Availabilities in a Timeline Format */}
-      <div className="current-availabilities">
-        <h2>Your Current Availabilities</h2>
-        {availabilities.length > 0 ? (
-          <AvailabilityTimeline availabilities={availabilities} />
-        ) : (
-          <p>No availabilities set yet.</p>
-        )}
-      </div>
+  return (
+    <div className="doctor-page">
+      {loading ? (
+        <div className="loader">Loading...</div>
+      ) : error ? (
+        <div className="error-message">{error}</div>
+      ) : (
+        <>
+          <div className="side-menu">
+            <p className="greeting">{getGreeting()}</p>
+            <ul>
+              {menuItems.map((item) => (
+                <li
+                  key={item.id}
+                  className={selectedTab === item.id ? "active" : ""}
+                  onClick={() => setSelectedTab(item.id)}
+                >
+                  <span className="menu-icon">{item.icon}</span>
+                  <span className="menu-label">{item.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="main-content">{renderMainContent()}</div>
+          <ProfileSetupModal />
+        </>
+      )}
     </div>
   );
 };
 
-export default DoctorsAvailabilityPage;
+export default DoctorPage;
