@@ -572,3 +572,339 @@
     justify-content: center;
   }
 }
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(30deg);
+  }
+  50% {
+    transform: translateX(100%) rotate(30deg);
+  }
+  100% {
+    transform: translateX(-100%) rotate(30deg);
+  }
+}
+/* Home Tab General */
+.home-tab {
+  background: #f7f7f7;
+  border-radius: 16px;
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Section Base Styles */
+.home-tab section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* Greeting Section - Enhanced with Original Style */
+.home-tab .welcome-section .welcome-header {
+  background: linear-gradient(135deg, #95d5b2, #52b788);
+  padding: 20px;
+  color: #fff;
+  text-align: center;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.home-tab .welcome-section h2 {
+  margin: 0;
+  font-size: 32px; /* Larger for readability */
+  font-weight: 600;
+}
+.home-tab .welcome-section p {
+  margin: 6px 0 0;
+  font-size: 18px; /* Larger for clarity */
+  opacity: 0.9;
+}
+.home-tab .shine-effect {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.2); /* Slightly stronger shine */
+  transform: rotate(30deg);
+  animation: shine 6s infinite;
+}
+
+/* Quick Stats Section */
+.home-tab .stats-section {
+  background: #fff;
+}
+.home-tab .stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.home-tab .stat-card {
+  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+}
+.home-tab .stat-card h4 {
+  margin: 0;
+  color: #2d6a4f;
+  font-size: 16px; /* Increased for readability */
+  font-weight: 500;
+}
+.home-tab .stat-card p {
+  font-size: 24px; /* Kept larger for visibility */
+  margin: 6px 0 0;
+  color: #555;
+}
+
+/* Available Therapists Section */
+.home-tab .therapists-section {
+  background: #fff;
+}
+.home-tab .therapists-section h3 {
+  font-size: 20px;
+  color: #2d6a4f;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.home-tab .therapists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.home-tab .therapist-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+}
+.home-tab .therapist-card h4 {
+  margin: 0;
+  color: #2d6a4f;
+  font-size: 18px; /* Increased for student names */
+  font-weight: 500;
+}
+.home-tab .therapist-card p {
+  margin: 4px 0 0;
+  color: #555;
+  font-size: 14px; /* Slightly larger */
+}
+
+/* Timeline Section */
+.home-tab .timeline-section {
+  background: #fff;
+}
+.home-tab .timeline-section h3 {
+  font-size: 20px;
+  color: #2d6a4f;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.home-tab .upcoming-timeline {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding-bottom: 6px;
+}
+.home-tab .timeline-card {
+  min-width: 140px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  text-align: center;
+}
+.home-tab .timeline-card p {
+  margin: 3px 0;
+  font-size: 14px; /* Increased for readability */
+  color: #555;
+}
+.home-tab .timeline-card p:nth-child(3) {
+  color: #2d6a4f;
+  font-weight: 500;
+  font-size: 16px; /* Larger for child names */
+}
+
+/* Upcoming Appointments Section */
+.home-tab .upcoming-section {
+  background: #fff;
+}
+.home-tab .upcoming-section h3 {
+  font-size: 20px;
+  color: #2d6a4f;
+  margin-bottom: 10px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.home-tab .count-badge {
+  background: #2d6a4f;
+  color: #fff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+}
+.home-tab .appointments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+.home-tab .appointment-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+}
+.home-tab .appointment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.home-tab .appointment-header h4 {
+  margin: 0;
+  font-size: 18px; /* Increased for child names */
+  font-weight: 500;
+  color: #2d6a4f;
+}
+.home-tab .appointment-header span {
+  background: #e9f7ef;
+  color: #2d6a4f;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+.home-tab .appointment-card p {
+  margin: 3px 0;
+  font-size: 14px; /* Larger for readability */
+  color: #555;
+}
+.home-tab .appointment-card .reason {
+  color: #777;
+  font-size: 13px;
+}
+
+/* Child Summary Section */
+.home-tab .children-section {
+  background: #fff;
+}
+.home-tab .children-section h3 {
+  font-size: 20px;
+  color: #2d6a4f;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.home-tab .children-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+.home-tab .child-card-summary {
+  padding: 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+}
+.home-tab .child-card-summary h4 {
+  margin: 0;
+  font-size: 18px; /* Increased for child names */
+  font-weight: 500;
+  color: #2d6a4f;
+}
+.home-tab .child-card-summary p {
+  margin: 3px 0;
+  font-size: 14px; /* Larger for readability */
+  color: #555;
+}
+
+/* Past Appointments Section */
+.home-tab .past-section {
+  background: #fff;
+}
+.home-tab .past-section h3 {
+  font-size: 20px;
+  color: #7f8c8d;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.home-tab .past-appointment-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+}
+.home-tab .past-appointment-card h4 {
+  margin: 0;
+  font-size: 18px; /* Increased for child names */
+  font-weight: 500;
+  color: #7f8c8d;
+}
+.home-tab .past-appointment-card p {
+  margin: 3px 0;
+  font-size: 14px; /* Larger for readability */
+  color: #777;
+}
+
+/* Quick Tips Section */
+.home-tab .tips-section {
+  background: #fff;
+}
+.home-tab .tips-section h3 {
+  font-size: 20px;
+  color: #2d6a4f;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.home-tab .tips-list {
+  list-style: none;
+  padding: 0;
+  color: #555;
+}
+.home-tab .tips-list li {
+  margin-bottom: 6px;
+  font-size: 14px; /* Larger for readability */
+  padding-left: 20px;
+  position: relative;
+}
+.home-tab .tips-list li:before {
+  content: "✓";
+  color: #52b788;
+  position: absolute;
+  left: 0;
+  font-size: 14px;
+}
+
+/* No Data Styling */
+.home-tab .no-data {
+  color: #777;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* Scrollbar for Timeline */
+.home-tab .upcoming-timeline::-webkit-scrollbar {
+  height: 6px;
+}
+.home-tab .upcoming-timeline::-webkit-scrollbar-thumb {
+  background: #95d5b2;
+  border-radius: 3px;
+}
+.home-tab .upcoming-timeline::-webkit-scrollbar-track {
+  background: #e8e8e8;
+}
+
+/* Shine Animation */
+@keyframes shine {
+  0% { transform: translateX(-100%) rotate(30deg); }
+  50% { transform: translateX(100%) rotate(30deg); }
+  100% { transform: translateX(-100%) rotate(30deg); }
+}

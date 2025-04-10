@@ -453,3 +453,314 @@ body {
     margin-bottom: 5px;
   }
 }
+
+/* availability.css */
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal Content */
+.modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 25px;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.modal-content h2 {
+  color: #2d6a4f;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Booking Details */
+.booking-details {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  flex: 0 0 100px;
+  font-weight: 600;
+  color: #555;
+  font-size: 14px;
+}
+
+.detail-value {
+  flex: 1;
+  color: #333;
+  font-size: 14px;
+}
+
+/* Edit Form */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.edit-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #555;
+}
+
+.edit-form input {
+  margin-top: 5px;
+  padding: 10px;
+  border: 1px solid #dcdcdc;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.edit-form input:focus {
+  border-color: #52b788;
+  outline: none;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.modal-btn.save-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.modal-btn.save-btn:hover {
+  background-color: #218838;
+}
+
+.modal-btn.cancel-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.modal-btn.cancel-btn:hover {
+  background-color: #c82333;
+}
+
+.modal-btn.close-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.modal-btn.close-btn:hover {
+  background-color: #5a6268;
+}
+
+.modal-close-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s;
+}
+
+.modal-close-btn:hover {
+  background-color: #5a6268;
+}
+
+.confirm-delete {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8d7da;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.confirm-delete p {
+  color: #721c24;
+  margin-bottom: 10px;
+}
+
+.modal-btn.delete-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.modal-btn.delete-btn:hover {
+  background-color: #c82333;
+}
+
+/* Action Buttons in Table */
+.action-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-right: 5px;
+  transition: background-color 0.3s;
+}
+
+.action-btn.edit-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.action-btn.edit-btn:hover {
+  background-color: #218838;
+}
+
+.action-btn.view-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.action-btn.view-btn:hover {
+  background-color: #0069d9;
+}
+
+/* Existing Styles (assuming these are already in your availability.css) */
+.preset-container {
+  padding: 20px;
+}
+
+.confirmation-msg {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.calendar-box {
+  margin-right: 20px;
+}
+
+.shifts {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.shift-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.shift-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.time-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.time-btn.available {
+  background-color: #52b788;
+  color: white;
+}
+
+.time-btn.taken {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.time-btn.past {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.tabs {
+  margin-bottom: 15px;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  margin-right: 10px;
+  border: none;
+  background-color: #f0f0f0;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background-color: #52b788;
+  color: white;
+}
+
+.avail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.avail-table th,
+.avail-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.no-data {
+  color: #666;
+  text-align: center;
+  padding: 20px;
+}
