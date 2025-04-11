@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
+//import { jwtDecode } from "jwt-decode";
 import "./design/TherapistPage.css";
 import Availability from "./Availability";
+import Appointments from "./Appointments";
+import TDashboard from "./Tdashboard";
 
 const DoctorPage = () => {
   const [therapistInfo, setTherapistInfo] = useState(null);
@@ -93,7 +95,7 @@ const DoctorPage = () => {
     }
     // Just decode to confirm we have a valid token (no need to rely on the sub data for showing the modal)
     try {
-      const decoded = jwtDecode(token);
+      //const decoded = jwtDecode(token);
       // we won't do anything with 'decoded' besides confirming it's valid
     } catch (err) {
       console.error("Token decode error:", err);
@@ -216,23 +218,12 @@ const DoctorPage = () => {
   const renderMainContent = () => {
     switch (selectedTab) {
       case "dashboard":
-        return (
-          <div className="dashboard-section">
-            <h1>Dashboard</h1>
-            <p>Welcome to your therapist dashboard. Here you can see stats, reminders, or upcoming appointments.</p>
-          </div>
-        );
+        return <TDashboard therapistInfo={therapistInfo} />;
         case "availability":
           return <Availability />;
         
       case "appointments":
-        return (
-          <div className="appointments-section">
-            <h1>Manage Appointments</h1>
-            <p>View and manage your appointments with students/clients.</p>
-            {/* Add your appointment logic */}
-          </div>
-        );
+        return <Appointments />;
       case "profile":
         return (
           <div className="profile-section">
