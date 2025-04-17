@@ -230,6 +230,15 @@ body {
   outline: none;
 }
 
+/* animate the chevron flipping */
+.expand-arrow svg {
+  transition: transform 0.2s ease;
+}
+/* rotate 180° when “expanded” */
+.expand-arrow.expanded svg {
+  transform: rotate(180deg);
+}
+
 /* Table styles */
 .user-table, .recent-table, .pending-table {
   width: 100%;

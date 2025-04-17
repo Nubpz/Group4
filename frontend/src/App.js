@@ -1,10 +1,10 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
-import ParentPage from './pages/ParentPage';
+import ParentPage from './pages/ParentPage/ParentPage';
 import StudentPage from './pages/StudentPage';
 import DoctorPage from './pages/DoctorPage';
-import AdminPage from './pages/AdminPage';
+import AdminPage from './pages/AdminPage/AdminPage';
 
 function App() {
   return (
