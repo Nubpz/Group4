@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import ParentPage from './pages/ParentPage/ParentPage';
-import StudentPage from './pages/StudentPage';
+import StudentPage from './pages/StudentPage/StudentPage';
 import DoctorPage from './pages/DoctorPage';
 import AdminPage from './pages/AdminPage/AdminPage';
 
