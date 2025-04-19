@@ -2,6 +2,7 @@ from flask import request, jsonify
 import mysql.connector
 from datetime import datetime, timedelta
 import json
+import bcrypt
 from utils.emailer import send_appt_email 
 from utils.emailer import notify_parent_for_appt 
 from flask_mail import Mail         
@@ -36,7 +37,8 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                     p.FirstName as first_name,
                     p.LastName as last_name,
                     p.DOB as date_of_birth,
-                    p.Gender as gender
+                    p.Gender as gender,
+                    p.Phone_number as phone_number
                 FROM USERS u
                 JOIN PARENT p ON u.USER_ID = p.USER_ID
                 WHERE u.USER_ID = %s
@@ -49,6 +51,133 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
         except mysql.connector.Error as err:
             print("Database error in get_parent_profile:", err)
             return jsonify({"message": "Database error occurred"}), 500
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals():
+                conn.close()
+
+    # --- Update Parent Profile ---
+    @app.route("/parents/profile", methods=["PUT"])
+    @jwt_required()
+    def update_parent_profile():
+        user_id = get_parent_user_id()
+        data = request.get_json()
+        required_fields = ["firstName", "lastName", "dateOfBirth", "gender", "phoneNumber"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({"message": f"Missing required field: {field}"}), 400
+
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            # Verify that the parent exists and fetch existing DOB
+            cursor.execute("SELECT PARENT_ID, DOB FROM PARENT WHERE USER_ID = %s", (user_id,))
+            parent_row = cursor.fetchone()
+            if not parent_row:
+                return jsonify({"message": "Parent not found"}), 404
+
+            # Validate that the provided dateOfBirth matches the existing DOB
+            existing_dob = parent_row["DOB"]
+            provided_dob = data["dateOfBirth"]
+            # Convert existing DOB to string in YYYY-MM-DD format for comparison
+            existing_dob_str = existing_dob.strftime("%Y-%m-%d") if existing_dob else ""
+            if provided_dob != existing_dob_str:
+                return jsonify({"message": "Date of Birth does not match our records."}), 400
+
+            # Update the parent's record in the PARENT table
+            update_query = """
+                UPDATE PARENT
+                SET FirstName = %s,
+                    LastName = %s,
+                    DOB = %s,
+                    Gender = %s,
+                    Phone_number = %s
+                WHERE USER_ID = %s
+            """
+            cursor.execute(update_query, (
+                data["firstName"],
+                data["lastName"],
+                data["dateOfBirth"],
+                data["gender"],
+                data["phoneNumber"],
+                user_id
+            ))
+            conn.commit()
+
+            # Fetch the updated profile
+            cursor.execute("""
+                SELECT 
+                    u.USER_ID as user_id,
+                    u.username,
+                    p.FirstName as first_name,
+                    p.LastName as last_name,
+                    p.DOB as date_of_birth,
+                    p.Gender as gender,
+                    p.Phone_number as phone_number
+                FROM USERS u
+                JOIN PARENT p ON u.USER_ID = p.USER_ID
+                WHERE u.USER_ID = %s
+            """, (user_id,))
+            updated_profile = cursor.fetchone()
+            return jsonify({"profile": updated_profile}), 200
+
+        except mysql.connector.Error as err:
+            conn.rollback()
+            print("Database error in update_parent_profile:", err)
+            return jsonify({"message": f"Error updating profile: {str(err)}"}), 500
+
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'conn' in locals():
+                conn.close()
+
+    # --- Change Parent Password ---
+    @app.route("/parents/change-password", methods=["POST"])
+    @jwt_required()
+    def change_parent_password():
+        user_id = get_parent_user_id()
+        data = request.get_json()
+        required_fields = ["currentPassword", "newPassword", "confirmNewPassword"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({"message": f"Missing required field: {field}"}), 400
+
+        if data["newPassword"] != data["confirmNewPassword"]:
+            return jsonify({"message": "New passwords do not match."}), 400
+
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            # Fetch the user's hashed password
+            cursor.execute("SELECT password FROM USERS WHERE USER_ID = %s", (user_id,))
+            user = cursor.fetchone()
+            if not user:
+                return jsonify({"message": "User not found."}), 404
+
+            # Verify the current password using bcrypt
+            input_password = data["currentPassword"].strip().encode('utf-8')
+            stored_password = user["password"].encode('utf-8')
+            if not bcrypt.checkpw(input_password, stored_password):
+                print(f"Password mismatch - Input: {input_password}, Stored: {stored_password}")
+                return jsonify({"message": "Current password is incorrect."}), 401
+
+            # Hash the new password and update it
+            new_password = data["newPassword"].strip().encode('utf-8')
+            hashed_new_password = bcrypt.hashpw(new_password, bcrypt.gensalt())
+            cursor.execute(
+                "UPDATE USERS SET password = %s WHERE USER_ID = %s",
+                (hashed_new_password.decode('utf-8'), user_id)
+            )
+            conn.commit()
+            return jsonify({"message": "Password updated successfully."}), 200
+
+        except mysql.connector.Error as err:
+            conn.rollback()
+            print("Database error in change_parent_password:", err)
+            return jsonify({"message": "Error updating password."}), 500
+
         finally:
             if 'cursor' in locals():
                 cursor.close()
@@ -112,20 +241,22 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
 
             placeholder_username = f"{data['firstName']}.{data['lastName']}.{datetime.now().timestamp()}"
             placeholder_password = "placeholderPassForChild"
+            # Hash the placeholder password with bcrypt
+            hashed_password = bcrypt.hashpw(placeholder_password.encode('utf-8'), bcrypt.gensalt())
             cursor.execute(
                 "INSERT INTO USERS (username, password, ROLE) VALUES (%s, %s, %s)",
-                (placeholder_username, placeholder_password, "student")
+                (placeholder_username, hashed_password.decode('utf-8'), "student")
             )
             child_user_id = cursor.lastrowid
             cursor.execute("""
-                INSERT INTO STUDENT (USER_ID, FirstName, LastName, DOB, Gender)
+                INSERT INTO Student (USER_ID, FirstName, LastName, DOB, Gender)
                 VALUES (%s, %s, %s, %s, %s)
             """, (child_user_id, data["firstName"], data["lastName"], data["dateOfBirth"], data["gender"]))
             student_id = cursor.lastrowid
 
             relation = data.get("relation", "parent")
             cursor.execute("""
-                INSERT INTO GUARDIAN (PARENT_ID, STUDENT_ID, Relation)
+                INSERT INTO GUARDIAN (PARENT_ID, Student_ID, Relation)
                 VALUES (%s, %s, %s)
             """, (parent_id, student_id, relation))
             conn.commit()
@@ -199,7 +330,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                     "appointment_type": row["Appointment_type"],
                     "meeting_link": row["Meeting_link"],
                     "therapist_name": therapist_full,
-                    "therapist_id":     row["therapist_id"],
+                    "therapist_id": row["therapist_id"],
                     "child_name": child_full,
                     "child_id": row["child_id"]
                 })
@@ -285,7 +416,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 SELECT 1
                 FROM GUARDIAN
                 WHERE PARENT_ID = (SELECT PARENT_ID FROM PARENT WHERE USER_ID = %s)
-                  AND STUDENT_ID = %s
+                  AND Student_ID = %s
             """, (user_id, child_id))
             guardian_row = cursor.fetchone()
             if not guardian_row:
@@ -356,7 +487,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 SELECT 1
                 FROM GUARDIAN
                 WHERE PARENT_ID = (SELECT PARENT_ID FROM PARENT WHERE USER_ID = %s)
-                  AND STUDENT_ID = %s
+                  AND Student_ID = %s
             """, (user_id, child_id))
             guardian_row = cursor.fetchone()
             if not guardian_row:
@@ -537,21 +668,21 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 SELECT 1
                 FROM GUARDIAN
                 WHERE PARENT_ID = (SELECT PARENT_ID FROM PARENT WHERE USER_ID = %s)
-                AND STUDENT_ID = %s
+                AND Student_ID = %s
                 """,
                 (user_id, child_id)
             )
             if not cursor.fetchone():
                 return jsonify({"message": "Child does not belong to this parent."}), 403
 
-            # Update the child's record in the STUDENT table.
+            # Update the child's record in the Student table.
             update_query = """
-                UPDATE STUDENT
+                UPDATE Student
                 SET FirstName = %s,
                     LastName = %s,
                     DOB = %s,
                     Gender = %s
-                WHERE STUDENT_ID = %s
+                WHERE Student_ID = %s
             """
             cursor.execute(update_query, (
                 data["firstName"],
@@ -565,13 +696,13 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             # Optionally fetch the updated record.
             cursor.execute(
                 """
-                SELECT STUDENT_ID AS id,
+                SELECT Student_ID AS id,
                     FirstName AS first_name,
                     LastName AS last_name,
                     DOB AS date_of_birth,
                     Gender AS gender
-                FROM STUDENT
-                WHERE STUDENT_ID = %s
+                FROM Student
+                WHERE Student_ID = %s
                 """,
                 (child_id,)
             )
@@ -604,7 +735,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 SELECT 1
                 FROM GUARDIAN
                 WHERE PARENT_ID = (SELECT PARENT_ID FROM PARENT WHERE USER_ID = %s)
-                  AND STUDENT_ID = %s
+                  AND Student_ID = %s
                 """,
                 (user_id, child_id)
             )
@@ -616,7 +747,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 """
                 SELECT Appointment_ID, AVAILABILITY_ID
                 FROM APPOINTMENTS
-                WHERE STUDENT_ID = %s
+                WHERE Student_ID = %s
                 """,
                 (child_id,)
             )
@@ -636,13 +767,13 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
 
             # Delete the guardian record.
             cursor.execute(
-                "DELETE FROM GUARDIAN WHERE STUDENT_ID = %s",
+                "DELETE FROM GUARDIAN WHERE Student_ID = %s",
                 (child_id,)
             )
 
             # Delete the child record.
             cursor.execute(
-                "DELETE FROM STUDENT WHERE STUDENT_ID = %s",
+                "DELETE FROM Student WHERE Student_ID = %s",
                 (child_id,)
             )
             

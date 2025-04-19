@@ -653,3 +653,282 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Home Tab Additional Styles */
+
+/* Welcome Section */
+.welcome-section {
+  margin-bottom: 20px;
+}
+
+.welcome-header {
+  background-color: #f0f9f0;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.welcome-header h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.welcome-header p {
+  margin: 5px 0 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Stats Section */
+.stats-section {
+  margin-bottom: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.stat-card {
+  background-color: #f0f9f0;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.stat-card h4 {
+  margin: 0 0 10px;
+  color: #2d6a4f;
+  font-size: 16px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.dashboard-left, .dashboard-right {
+  flex: 1;
+  min-width: 300px;
+}
+
+.dashboard-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dashboard-card h3 {
+  color: #2d6a4f;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+/* Upcoming Appointments */
+.upcoming-section .appointments-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.appointment-card {
+  background-color: #f0f9f0;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.appointment-card:hover {
+  transform: translateY(-2px);
+}
+
+.appointment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.appointment-header h4 {
+  margin: 0;
+  font-size: 14px;
+  color: #2d6a4f;
+}
+
+.appointment-header span {
+  font-size: 12px;
+  color: #52b788;
+}
+
+.appointment-card p {
+  margin: 5px 0;
+  font-size: 12px;
+}
+
+.count-badge {
+  background-color: #52b788;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 10px;
+}
+
+/* Therapist Spotlight (Full-Screen Calendar Grid) */
+.therapist-spotlight-section {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #f0f9f0 0%, #d8f3dc 100%);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.therapist-spotlight {
+  min-height: 300px;
+}
+
+.calendar-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #333;
+  background-color: #f0f9f0;
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.legend-item:hover {
+  background-color: #e6f2e6;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.legend-item.selected {
+  background-color: #d8f3dc;
+  border-color: #2d6a4f;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  color: #2d6a4f;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.calendar-days {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.calendar-day {
+  flex: 1;
+  min-width: 140px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.calendar-day-header {
+  font-size: 14px;
+  font-weight: bold;
+  color: #2d6a4f;
+  text-align: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.calendar-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.calendar-slot {
+  padding: 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.calendar-slot:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.slot-time {
+  font-weight: bold;
+}
+
+/* Fade-in Animation */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Tips Section */
+.tips-section {
+  margin-top: 20px;
+}
+
+.tips-list {
+  list-style: none;
+  padding: 0;
+}
+
+.tips-list li {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.tips-list li strong {
+  color: #2d6a4f;
+}
+
+/* Responsive Adjustments for Home Tab */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-grid {
+    flex-direction: column;
+  }
+}

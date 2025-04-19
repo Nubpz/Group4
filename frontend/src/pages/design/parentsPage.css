@@ -584,6 +584,9 @@
     transform: translateX(-100%) rotate(30deg);
   }
 }
+
+/* Parent Home Tab Styles (Matching Student Home Tab) */
+
 /* Home Tab General */
 .home-tab {
   background: #f7f7f7;
@@ -654,143 +657,91 @@
   color: #2d6a4f;
   font-size: 16px; /* Increased for readability */
   font-weight: 500;
+  white-space: nowrap; /* Prevent text wrapping */
 }
 .home-tab .stat-card p {
-  font-size: 24px; /* Kept larger for visibility */
+  font-size: 22px; /* Kept larger for visibility */
   margin: 6px 0 0;
   color: #555;
 }
 
-/* Available Therapists Section */
-.home-tab .therapists-section {
-  background: #fff;
-}
-.home-tab .therapists-section h3 {
-  font-size: 20px;
-  color: #2d6a4f;
-  margin-bottom: 10px;
-  font-weight: 500;
-}
-.home-tab .therapists-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-}
-.home-tab .therapist-card {
-  padding: 12px;
-  border-radius: 10px;
-  background: #fafafa;
-  border: 1px solid #e8e8e8;
-}
-.home-tab .therapist-card h4 {
-  margin: 0;
-  color: #2d6a4f;
-  font-size: 18px; /* Increased for student names */
-  font-weight: 500;
-}
-.home-tab .therapist-card p {
-  margin: 4px 0 0;
-  color: #555;
-  font-size: 14px; /* Slightly larger */
+/* Dashboard Grid */
+.home-tab .dashboard-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-/* Timeline Section */
-.home-tab .timeline-section {
-  background: #fff;
+.home-tab .dashboard-left,
+.home-tab .dashboard-right {
+  flex: 1;
+  min-width: 300px;
 }
-.home-tab .timeline-section h3 {
-  font-size: 20px;
-  color: #2d6a4f;
-  margin-bottom: 10px;
-  font-weight: 500;
-}
-.home-tab .upcoming-timeline {
-  display: flex;
-  overflow-x: auto;
-  gap: 10px;
-  padding-bottom: 6px;
-}
-.home-tab .timeline-card {
-  min-width: 140px;
-  padding: 10px;
+
+.home-tab .dashboard-card {
+  background-color: #fff;
   border-radius: 8px;
-  background: #fafafa;
-  border: 1px solid #e8e8e8;
-  text-align: center;
-}
-.home-tab .timeline-card p {
-  margin: 3px 0;
-  font-size: 14px; /* Increased for readability */
-  color: #555;
-}
-.home-tab .timeline-card p:nth-child(3) {
-  color: #2d6a4f;
-  font-weight: 500;
-  font-size: 16px; /* Larger for child names */
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Upcoming Appointments Section */
-.home-tab .upcoming-section {
-  background: #fff;
-}
-.home-tab .upcoming-section h3 {
-  font-size: 20px;
+.home-tab .dashboard-card h3 {
   color: #2d6a4f;
-  margin-bottom: 10px;
-  font-weight: 500;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+/* Upcoming Appointments */
+.home-tab .upcoming-section .appointments-list {
+  max-height: 400px;
+  overflow-y: auto;
   display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.home-tab .count-badge {
-  background: #2d6a4f;
-  color: #fff;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 12px;
-}
-.home-tab .appointments-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  flex-direction: column;
   gap: 10px;
 }
+
 .home-tab .appointment-card {
-  padding: 12px;
-  border-radius: 10px;
-  background: #fafafa;
-  border: 1px solid #e8e8e8;
+  background-color: #f0f9f0;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
 }
+
+.home-tab .appointment-card:hover {
+  transform: translateY(-2px);
+}
+
 .home-tab .appointment-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
 }
+
 .home-tab .appointment-header h4 {
   margin: 0;
-  font-size: 18px; /* Increased for child names */
-  font-weight: 500;
+  font-size: 14px;
   color: #2d6a4f;
 }
+
 .home-tab .appointment-header span {
-  background: #e9f7ef;
-  color: #2d6a4f;
-  padding: 2px 8px;
-  border-radius: 10px;
+  font-size: 12px;
+  color: #52b788;
+}
+
+.home-tab .appointment-card p {
+  margin: 5px 0;
   font-size: 12px;
 }
-.home-tab .appointment-card p {
-  margin: 3px 0;
-  font-size: 14px; /* Larger for readability */
-  color: #555;
-}
-.home-tab .appointment-card .reason {
-  color: #777;
-  font-size: 13px;
+
+.home-tab .count-badge {
+  background-color: #52b788;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 10px;
 }
 
 /* Child Summary Section */
@@ -824,6 +775,123 @@
   margin: 3px 0;
   font-size: 14px; /* Larger for readability */
   color: #555;
+}
+
+/* Therapist Spotlight (Full-Screen Calendar Grid) */
+.home-tab .therapist-spotlight-section {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #f0f9f0 0%, #d8f3dc 100%);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.home-tab .therapist-spotlight {
+  min-height: 300px;
+}
+
+.home-tab .calendar-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.home-tab .calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.home-tab .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #333;
+  background-color: #f0f9f0;
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.home-tab .legend-item:hover {
+  background-color: #e6f2e6;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.home-tab .legend-item.selected {
+  background-color: #d8f3dc;
+  border-color: #2d6a4f;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  color: #2d6a4f;
+}
+
+.home-tab .legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.home-tab .calendar-days {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.home-tab .calendar-day {
+  flex: 1;
+  min-width: 140px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.home-tab .calendar-day-header {
+  font-size: 14px;
+  font-weight: bold;
+  color: #2d6a4f;
+  text-align: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.home-tab .calendar-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-tab .calendar-slot {
+  padding: 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.home-tab .calendar-slot:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.home-tab .slot-time {
+  font-weight: bold;
+}
+
+/* Fade-in Animation */
+.home-tab .fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Past Appointments Section */
@@ -890,21 +958,12 @@
   font-size: 14px;
 }
 
-/* Scrollbar for Timeline */
-.home-tab .upcoming-timeline::-webkit-scrollbar {
-  height: 6px;
-}
-.home-tab .upcoming-timeline::-webkit-scrollbar-thumb {
-  background: #95d5b2;
-  border-radius: 3px;
-}
-.home-tab .upcoming-timeline::-webkit-scrollbar-track {
-  background: #e8e8e8;
-}
-
-/* Shine Animation */
-@keyframes shine {
-  0% { transform: translateX(-100%) rotate(30deg); }
-  50% { transform: translateX(100%) rotate(30deg); }
-  100% { transform: translateX(-100%) rotate(30deg); }
+/* Responsive Adjustments for Home Tab */
+@media (max-width: 768px) {
+  .home-tab .stats-container {
+    grid-template-columns: 1fr;
+  }
+  .home-tab .dashboard-grid {
+    flex-direction: column;
+  }
 }
