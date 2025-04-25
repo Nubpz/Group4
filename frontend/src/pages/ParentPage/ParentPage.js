@@ -175,7 +175,8 @@ const ParentPage = () => {
       ? `${greeting}, ${profile.first_name}`
       : `${greeting}, Parent`;
   };
-
+  
+  const [hasFetchedChildren, setHasFetchedChildren] = useState(false);
   // ───────── fetch children ───────────
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -183,7 +184,8 @@ const ParentPage = () => {
       navigate("/auth");
       return;
     }
-    if (childrenData.length === 0) {
+    // Fetch only if childrenData is not yet populated
+    if (!hasFetchedChildren) {
       fetch("http://localhost:3000/parents/children", {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -191,16 +193,21 @@ const ParentPage = () => {
         .then((data) => {
           if (data.children) {
             setChildrenData(data.children);
-            if (data.children.length > 0 && !selectedChildId) {
-              setSelectedChildId(data.children[0].id);
-            }
+            setHasFetchedChildren(true);
           } else {
             setError(data.message || "Failed to fetch children data");
           }
         })
         .catch(() => setError("Failed to fetch children data"));
     }
-  }, [childrenData, navigate, selectedChildId]);
+  }, [navigate, hasFetchedChildren]); // Only depend on navigate
+
+  // Separate effect to set selectedChildId after childrenData is populated
+  useEffect(() => {
+    if (childrenData.length > 0 && !selectedChildId) {
+      setSelectedChildId(childrenData[0].id);
+    }
+  }, [childrenData, selectedChildId]);
 
   // ───────── home appointments ─────────
   useEffect(() => {
@@ -434,13 +441,6 @@ const ParentPage = () => {
       return;
     }
     try {
-      console.log("Profile update data:", {
-        firstName: editProfileData.firstName,
-        lastName: editProfileData.lastName,
-        dateOfBirth: editProfileData.dateOfBirth,
-        gender: editProfileData.gender,
-        phoneNumber: editProfileData.phoneNumber,
-      });
       const res = await fetch("http://localhost:3000/parents/profile", {
         method: "PUT",
         headers: {
@@ -462,12 +462,11 @@ const ParentPage = () => {
       }
       setProfile(data.profile);
       setIsEditingProfile(false);
-      setShowProfileCompleteModal(false);
+      setShowProfileCompleteModal(false); // Close the modal
       setProfileMessage({ type: "success", message: "Profile updated successfully!" });
-      setIsProfileIncomplete(false);
-    } catch (err) {
-      console.error("Update profile error:", err);
-      setProfileMessage({ type: "error", message: err.message || "Failed to update profile due to an error." });
+      setIsProfileIncomplete(false); // Profile is now complete
+    } catch {
+      setProfileMessage({ type: "error", message: "Failed to update profile due to an error." });
     }
   };
 
@@ -532,6 +531,7 @@ const ParentPage = () => {
     localStorage.removeItem("token");
     navigate("/");
   };
+
 
   // ───────── booking reset & final ─────────
   const resetBooking = () => {
@@ -1261,7 +1261,7 @@ const ParentPage = () => {
                       ? categorizeSlots(filtered)
                       : { Morning: [], Afternoon: [], Evening: [] };
                     return Object.entries(categorized).map(([cat, arr]) =>
-                      arr.length > 0 ? (
+                      arr.length > 0 && (
                         <div key={cat} className="timeslot-category">
                           <h4>{cat}</h4>
                           <div className="timeslot-list">
@@ -1279,7 +1279,7 @@ const ParentPage = () => {
                             ))}
                           </div>
                         </div>
-                      ) : null
+                      )
                     );
                   })()
                 ) : (
@@ -1313,7 +1313,7 @@ const ParentPage = () => {
           <div className="modal-content" style={{ width: 600 }}>
             <h2>Complete Your Profile</h2>
             <p className="mandatory-message">
-              Please complete your profile details to continue. Your date of birth must match our records.
+              Please complete your profile details to continue.
             </p>
             {profileMessage.message && (
               <p className={`message ${profileMessage.type}`}>

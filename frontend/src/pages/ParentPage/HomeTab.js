@@ -37,23 +37,32 @@ export default function HomeTab({
         day: "numeric",
       })
     : "None";
+  
+  const normalizeDate = (dateString) => {
+    const date = new Date(dateString);
+     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  };
 
   // Available therapists for the calendar grid (limited to 4 for display)
   const availableTherapists = availableSlots
-    .map((group) => ({
+    .map((group) => {
+      const today = new Date(now).setHours(0, 0, 0, 0);
+      return{
       name: group.therapist_name,
       id: group.therapist_id,
       slots: group.appointments
         .filter(
-          (slot) =>
-            new Date(`${slot.date}T${slot.start_time}`) >= now
-        )
+          (slot) => {
+            const slotDate = normalizeDate(slot.date).getTime();
+            return slotDate >= today;
+          })
         .sort(
           (a, b) =>
             new Date(`${a.date}T${a.start_time}`) -
             new Date(`${b.date}T${b.start_time}`)
         ),
-    }))
+      };
+    })
     .filter((t) => t.slots.length > 0)
     .slice(0, 4);
 
@@ -64,9 +73,9 @@ export default function HomeTab({
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(now);
     date.setDate(now.getDate() + i);
-    return date;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
   });
-
+  
   // Map slots to days for the calendar, filtering by selected therapist
   const therapistColors = ["#52b788", "#2d6a4f", "#95d5b2", "#40916c"];
   const calendarSlots = days.map((day) => {

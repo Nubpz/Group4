@@ -20,6 +20,7 @@ from admin_routes import register_routes as admin_routes
 from therapist_routes import register_routes as therapist_routes
 from parent_routes import register_routes as parent_routes
 from student_routes import register_routes as student_routes
+from chatbot_routes import register_routes as chatbot_routes
 
 load_dotenv()    
 app = Flask(__name__)
@@ -61,6 +62,7 @@ admin_routes(app, get_db_connection, jwt_required, get_jwt_identity)
 therapist_routes(app, get_db_connection, jwt_required, get_jwt_identity)
 parent_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail)
 student_routes(app, get_db_connection, jwt_required, get_jwt_identity)
+chatbot_routes(app, get_db_connection, jwt_required, get_jwt_identity)
 # ... Add other routes here ...
 
 # --------------------
