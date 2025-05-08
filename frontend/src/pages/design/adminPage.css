@@ -476,3 +476,25 @@ svg {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 }
+
+.tab-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.logout-button {
+  background-color: #ff4d4d; /* Red background for logout */
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background-color: #cc0000; /* Darker red on hover */
+}

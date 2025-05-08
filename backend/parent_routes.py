@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import json
 import bcrypt
 from utils.emailer import send_appt_email 
-from utils.emailer import notify_parent_for_appt 
+from utils.emailer import notify_parent_for_appt, notify_therapist_for_appt 
 from flask_mail import Mail         
 
 def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail):
@@ -526,6 +526,8 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             conn.commit()
 
             notify_parent_for_appt(cursor, mail, new_appointment_id, "booked")
+            
+            notify_therapist_for_appt(cursor, mail, new_appointment_id, "booked")
 
             return jsonify({
                 "message": "Appointment booked successfully.",
@@ -572,6 +574,8 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             conn.commit()
 
             notify_parent_for_appt(cursor, mail, appointment_id, "cancelled")
+
+            notify_therapist_for_appt(cursor, mail, appointment_id, "cancelled")
 
             return jsonify({"message": "Appointment cancelled successfully."}), 200
         except mysql.connector.Error as err:
@@ -636,6 +640,8 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             cursor.execute("UPDATE AVAILABILITY SET Status = 'not_available' WHERE ID = %s", (new_slot_id,))
             
             notify_parent_for_appt(cursor, mail, appointment_id, "rescheduled")
+
+            notify_therapist_for_appt(cursor, mail, appointment_id, "rescheduled")
             
             conn.commit()
             return jsonify({"message": "Appointment rescheduled successfully."}), 200

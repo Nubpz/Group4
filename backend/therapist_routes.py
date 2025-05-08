@@ -2,6 +2,7 @@ import json
 from flask import jsonify, request
 import mysql.connector
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from utils.emailer import notify_student_for_appt, notify_parent_for_appt, notify_therapist_for_appt
 
 def extract_user_id():
     current = get_jwt_identity()
@@ -12,7 +13,7 @@ def extract_user_id():
             print("Error decoding JWT identity:", e)
     return current.get("userId") if isinstance(current, dict) else current
 
-def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
+def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail):
     """
     Register therapist-specific endpoints.
     """
@@ -306,18 +307,18 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             if 'conn' in locals():
                 conn.close()
 
-    # New endpoint to delete an appointment and update availability
     @app.route('/therapist/appointments/<int:appointment_id>', methods=['DELETE'])
     @jwt_required()
     def delete_appointment(appointment_id):
         current_user_id = extract_user_id()
+        print(f"START: Deleting appointment: appointment_id={appointment_id}, therapist_user_id={current_user_id}")
         try:
             conn = get_db_connection()
             cursor = conn.cursor(dictionary=True)
 
             # Verify the appointment belongs to the therapist and get the AVAILABILITY_ID
             query = """
-            SELECT a.Appointment_ID, a.AVAILABILITY_ID
+            SELECT a.Appointment_ID, a.AVAILABILITY_ID, a.STUDENT_ID
             FROM APPOINTMENTS a
             JOIN AVAILABILITY av ON a.AVAILABILITY_ID = av.ID
             JOIN THERAPIST t ON av.THERAPIST_ID = t.THERAPIST_ID
@@ -325,6 +326,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             """
             cursor.execute(query, (appointment_id, current_user_id))
             appointment = cursor.fetchone()
+            print(f"Appointment query result: {appointment}")
             if not appointment:
                 return jsonify({"error": "Appointment not found or not owned by this therapist"}), 404
 
@@ -339,10 +341,35 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             """, (appointment["AVAILABILITY_ID"],))
 
             conn.commit()
+
+            # Send notifications to student, parent (if linked), and therapist
+            # Student: Always notified, as APPOINTMENTS.STUDENT_ID is required
+            try:
+                print(f"Calling notify_student_for_appt for appointment_id={appointment_id}")
+                notify_student_for_appt(cursor, mail, appointment_id, "cancelled")
+                print(f"Student email notification sent for appointment_id={appointment_id}, status=cancelled")
+            except Exception as email_err:
+                print(f"Error sending student email notification for appointment_id={appointment_id}: {email_err}")
+            # Parent: Notified if GUARDIAN links STUDENT_ID to a PARENT_ID
+            try:
+                print(f"Calling notify_parent_for_appt for appointment_id={appointment_id}")
+                notify_parent_for_appt(cursor, mail, appointment_id, "cancelled")
+                print(f"Parent email notification sent for appointment_id={appointment_id}, status=cancelled")
+            except Exception as email_err:
+                print(f"Error sending parent email notification for appointment_id={appointment_id}: {email_err}")
+            # Therapist: Notified to confirm their own action
+            try:
+                print(f"Calling notify_therapist_for_appt for appointment_id={appointment_id}")
+                notify_therapist_for_appt(cursor, mail, appointment_id, "cancelled")
+                print(f"Therapist email notification sent for appointment_id={appointment_id}, status=cancelled")
+            except Exception as email_err:
+                print(f"Error sending therapist email notification for appointment_id={appointment_id}: {email_err}")
+
+            print(f"END: Appointment deleted successfully for appointment_id={appointment_id}")
             return jsonify({"message": "Appointment deleted and slot made available"}), 200
         except mysql.connector.Error as err:
+            print(f"END: Database error in delete_appointment: {err}")
             conn.rollback()
-            print("Database error in delete_appointment:", err)
             return jsonify({"error": "Failed to delete appointment"}), 500
         finally:
             if 'cursor' in locals():
@@ -360,20 +387,23 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             if field not in data or not data[field]:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
 
+        print(f"START: Updating appointment: appointment_id={appointment_id}, therapist_user_id={current_user_id}, data={data}")
         try:
             conn = get_db_connection()
-            cursor = conn.cursor()
+            cursor = conn.cursor(dictionary=True)
 
             # Verify the appointment belongs to the therapist
             check_query = """
-            SELECT a.Appointment_ID
+            SELECT a.Appointment_ID, a.STUDENT_ID, a.Meeting_link AS current_meeting_link
             FROM APPOINTMENTS a
             JOIN AVAILABILITY av ON a.AVAILABILITY_ID = av.ID
             JOIN THERAPIST t ON av.THERAPIST_ID = t.THERAPIST_ID
             WHERE a.Appointment_ID = %s AND t.USER_ID = %s
             """
             cursor.execute(check_query, (appointment_id, current_user_id))
-            if not cursor.fetchone():
+            appointment = cursor.fetchone()
+            print(f"Appointment query result: {appointment}")
+            if not appointment:
                 return jsonify({"error": "Appointment not found or not owned by this therapist"}), 404
 
             # Update appointment
@@ -384,17 +414,54 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             """
             cursor.execute(update_query, (
                 data['status'],
-                data.get('meetingLink'),  # Optional field
+                data.get('meetingLink'),
                 appointment_id
             ))
             conn.commit()
 
+            # Determine notification status
+            # If only meetingLink changed, use 'link_updated'
+            new_meeting_link = data.get('meetingLink')
+            current_meeting_link = appointment.get('current_meeting_link')
+            status = data['status'].lower()
+            if (new_meeting_link != current_meeting_link and 
+                status == appointment.get('Status', '').lower()):
+                status = 'link_updated'
+            elif status not in ['booked', 'cancelled', 'rescheduled']:
+                status = 'updated'  # Generic status for other changes
+
+            # Send notifications to student, parent (if linked), and therapist
+            # Student: Always notified, as APPOINTMENTS.STUDENT_ID is required
+            try:
+                print(f"Calling notify_student_for_appt for appointment_id={appointment_id}")
+                notify_student_for_appt(cursor, mail, appointment_id, status)
+                print(f"Student email notification sent for appointment_id={appointment_id}, status={status}")
+            except Exception as email_err:
+                print(f"Error sending student email notification for appointment_id={appointment_id}: {email_err}")
+            # Parent: Notified if GUARDIAN links STUDENT_ID to a PARENT_ID
+            try:
+                print(f"Calling notify_parent_for_appt for appointment_id={appointment_id}")
+                notify_parent_for_appt(cursor, mail, appointment_id, status)
+                print(f"Parent email notification sent for appointment_id={appointment_id}, status={status}")
+            except Exception as email_err:
+                print(f"Error sending parent email notification for appointment_id={appointment_id}: {email_err}")
+            # Therapist: Notified to confirm their own action
+            try:
+                print(f"Calling notify_therapist_for_appt for appointment_id={appointment_id}")
+                notify_therapist_for_appt(cursor, mail, appointment_id, status)
+                print(f"Therapist email notification sent for appointment_id={appointment_id}, status={status}")
+            except Exception as email_err:
+                print(f"Error sending therapist email notification for appointment_id={appointment_id}: {email_err}")
+
+            print(f"END: Appointment updated successfully for appointment_id={appointment_id}")
             return jsonify({"message": "Appointment updated successfully"}), 200
         except mysql.connector.Error as err:
-            print("Database error in update_appointment:", err)
+            print(f"END: Database error in update_appointment: {err}")
             return jsonify({"error": "Failed to update appointment"}), 500
         finally:
             if 'cursor' in locals():
                 cursor.close()
             if 'conn' in locals():
                 conn.close()
+
+    return app

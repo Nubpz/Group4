@@ -105,7 +105,7 @@ const Appointments = () => {
           },
           body: JSON.stringify({
             status: formData.status,
-            meetingLink: formData.meetingLink,
+            meetingLink: formData.status === "confirmed" ? formData.meetingLink : null, // Clear meetingLink if not confirmed
           }),
         }
       );
@@ -317,7 +317,7 @@ const Appointments = () => {
                     <option value="cancelled">Cancelled</option>
                   </select>
                 </label>
-                {selectedAppointment.Appointment_type === "virtual" && (
+                {selectedAppointment.Appointment_type === "virtual" && formData.status === "confirmed" && (
                   <label>
                     Meeting Link:
                     <input

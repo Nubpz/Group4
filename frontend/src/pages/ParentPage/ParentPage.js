@@ -11,6 +11,92 @@ import BookingTab from "./BookingTab";
 // your emailer utils (if used)
 //import { send_appt_email, notify_parent_for_appt } from "../utils/emailer";
 
+// Sidebar menu definitions
+const menuItems = [
+  {
+    id: "home",
+    label: "Home",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+    ),
+  },
+  {
+    id: "accounts",
+    label: "Child Accounts",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
+        <circle cx="10" cy="7" r="4"></circle>
+      </svg>
+    ),
+  },
+  {
+    id: "appointments",
+    label: "Book Appointments",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    ),
+  },
+  {
+    id: "profile",
+    label: "Profile",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    ),
+  },
+];
+
 const ParentPage = () => {
   // ─────────── sidebar / tab ───────────
   const [selectedTab, setSelectedTab] = useState("home");
@@ -532,7 +618,6 @@ const ParentPage = () => {
     navigate("/");
   };
 
-
   // ───────── booking reset & final ─────────
   const resetBooking = () => {
     setBookingError("");
@@ -594,16 +679,13 @@ const ParentPage = () => {
         },
         body: JSON.stringify({ appointmentId }),
       });
-      const data = await res.json();
       if (!res.ok) {
-        alert(data.message || "Failed to cancel appointment.");
         return;
       }
-      alert("Appointment cancelled successfully.");
       fetchChildAppointments();
     } catch (err) {
       console.error("Cancel error:", err);
-      alert("Failed to cancel appointment due to an error.");
+      
     }
   };
 
@@ -622,19 +704,15 @@ const ParentPage = () => {
           newSlotId,
         }),
       });
-      const data = await res.json();
       if (!res.ok) {
-        alert(data.message || "Reschedule failed.");
         return;
       }
-      alert("Appointment rescheduled successfully.");
       setShowRescheduleModal(false);
       setNewSlotId(null);
       setAppointmentToReschedule(null);
       fetchChildAppointments();
     } catch (err) {
       console.error("Reschedule error:", err);
-      alert("Reschedule failed due to an error.");
     }
   };
 
@@ -978,36 +1056,18 @@ const ParentPage = () => {
       <div className="side-menu">
         <p className="greeting">{getGreeting()}</p>
         <ul>
-          <li
-            className={selectedTab === "home" ? "active" : ""}
-            onClick={() => {
-              if (!isProfileIncomplete) setSelectedTab("home");
-            }}
-          >
-            Home
-          </li>
-          <li
-            className={selectedTab === "accounts" ? "active" : ""}
-            onClick={() => {
-              if (!isProfileIncomplete) setSelectedTab("accounts");
-            }}
-          >
-            Child Accounts
-          </li>
-          <li
-            className={selectedTab === "appointments" ? "active" : ""}
-            onClick={() => {
-              if (!isProfileIncomplete) setSelectedTab("appointments");
-            }}
-          >
-            Book Appointments
-          </li>
-          <li
-            className={selectedTab === "profile" ? "active" : ""}
-            onClick={() => setSelectedTab("profile")}
-          >
-            Profile
-          </li>
+          {menuItems.map((item) => (
+            <li
+              key={item.id}
+              className={selectedTab === item.id ? "active" : ""}
+              onClick={() => {
+                if (!isProfileIncomplete || item.id === "profile") setSelectedTab(item.id);
+              }}
+            >
+              <span className="menu-icon">{item.icon}</span>
+              <span className="menu-label">{item.label}</span>
+            </li>
+          ))}
         </ul>
       </div>
 

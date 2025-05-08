@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-//import { jwtDecode } from "jwt-decode";
+import { useNavigate } from "react-router-dom";
 import "./design/TherapistPage.css";
 import Availability from "./Availability";
 import Appointments from "./Appointments";
@@ -11,6 +11,7 @@ const DoctorPage = () => {
   const [error, setError] = useState(null);
   const [selectedTab, setSelectedTab] = useState("dashboard");
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false); // New state for logout modal
   const [profileFormData, setProfileFormData] = useState({
     firstName: "",
     lastName: "",
@@ -19,6 +20,7 @@ const DoctorPage = () => {
   const [profileSubmitting, setProfileSubmitting] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
+  const navigate = useNavigate();
 
   // Menu items with icons
   const menuItems = [
@@ -27,9 +29,15 @@ const DoctorPage = () => {
       label: "Dashboard",
       icon: (
         <svg
-          xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
           <rect x="3" y="3" width="7" height="9"></rect>
           <rect x="14" y="3" width="7" height="5"></rect>
@@ -43,9 +51,15 @@ const DoctorPage = () => {
       label: "My Availability",
       icon: (
         <svg
-          xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -59,9 +73,15 @@ const DoctorPage = () => {
       label: "Client Appointments",
       icon: (
         <svg
-          xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
           <path d="M12 20h9"></path>
           <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"></path>
@@ -73,12 +93,17 @@ const DoctorPage = () => {
       label: "My Profile",
       icon: (
         <svg
-          xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8
-                   a4 4 0 0 0-4 4v2"></path>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
       )
@@ -93,17 +118,6 @@ const DoctorPage = () => {
       setLoading(false);
       return;
     }
-    // Just decode to confirm we have a valid token (no need to rely on the sub data for showing the modal)
-    try {
-      //const decoded = jwtDecode(token);
-      // we won't do anything with 'decoded' besides confirming it's valid
-    } catch (err) {
-      console.error("Token decode error:", err);
-      setError("Invalid token. Please log in again.");
-      setLoading(false);
-      return;
-    }
-    // Now fetch the actual profile from the server
     fetchTherapistDetails(token);
   }, []);
 
@@ -119,7 +133,6 @@ const DoctorPage = () => {
       if (!response.ok) throw new Error("Failed to fetch therapist details");
       const data = await response.json();
 
-      // Save it in state
       setTherapistInfo(data);
       setProfileFormData({
         firstName: data.first_name || "",
@@ -127,9 +140,7 @@ const DoctorPage = () => {
         gender: data.gender || ""
       });
 
-      // Now that we have the server data, see if it's incomplete
-      const isIncomplete =
-        !data.first_name || !data.last_name || !data.gender;
+      const isIncomplete = !data.first_name || !data.last_name || !data.gender;
       if (isIncomplete) {
         setShowProfileModal(true);
       }
@@ -145,6 +156,20 @@ const DoctorPage = () => {
   const handleProfileInputChange = (e) => {
     const { name, value } = e.target;
     setProfileFormData({ ...profileFormData, [name]: value });
+  };
+
+  const handleLogout = () => {
+    setShowLogoutConfirm(true); // Show logout confirmation modal
+  };
+
+  const confirmLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/");
+    setShowLogoutConfirm(false);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
 
   // Save profile
@@ -189,7 +214,6 @@ const DoctorPage = () => {
       setTherapistInfo(updatedData);
       setProfileSuccess("Profile updated successfully!");
 
-      // Dismiss modal once complete
       setTimeout(() => {
         setShowProfileModal(false);
         setProfileSuccess("");
@@ -219,9 +243,8 @@ const DoctorPage = () => {
     switch (selectedTab) {
       case "dashboard":
         return <TDashboard therapistInfo={therapistInfo} />;
-        case "availability":
-          return <Availability />;
-        
+      case "availability":
+        return <Availability />;
       case "appointments":
         return <Appointments />;
       case "profile":
@@ -239,13 +262,16 @@ const DoctorPage = () => {
                   ) : (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="40" height="40"
-                      viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" strokeWidth="1"
-                      strokeLinecap="round" strokeLinejoin="round"
+                      width="40"
+                      height="40"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     >
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8
-                               a4 4 0 0 0-4 4v2"></path>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                       <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                   )}
@@ -292,21 +318,79 @@ const DoctorPage = () => {
                   </span>
                 </div>
               </div>
-              <button className="edit-profile-button" onClick={() => setShowProfileModal(true)}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+                <button
+                  className="edit-profile-button"
+                  onClick={() => setShowProfileModal(true)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    backgroundColor: "#007bff",
+                    color: "white",
+                    border: "none",
+                    padding: "0.5rem 1rem",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "1rem",
+                    transition: "background-color 0.3s"
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#0056b3")}
+                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#007bff")}
                 >
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14
-                           a2 2 0 0 0 2 2h14
-                           a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5
-                           a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z">
-                  </path>
-                </svg>
-                Edit Profile
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Edit Profile
+                </button>
+                <button
+                  className="logout-button"
+                  onClick={handleLogout}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    backgroundColor: "#ff4d4d",
+                    color: "white",
+                    border: "none",
+                    padding: "0.5rem 1rem",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "1rem",
+                    transition: "background-color 0.3s"
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#cc0000")}
+                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#ff4d4d")}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M9 21H5a2 2 0 1 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         );
@@ -317,23 +401,24 @@ const DoctorPage = () => {
 
   // Modal for profile completion
   const ProfileSetupModal = () => {
-    // If the server says we have all fields, we shouldn't show the modal
-    // but let's confirm the user can close it if needed
-    const isProfileComplete = !!(
-      therapistInfo &&
-      therapistInfo.first_name &&
-      therapistInfo.last_name &&
-      therapistInfo.gender
-    );
-
     return (
       <div className={`modal ${showProfileModal ? "show" : ""}`}>
         <div className="modal-content profile-modal">
-          {isProfileComplete && (
-            <span className="close-button" onClick={() => setShowProfileModal(false)}>
-              &times;
-            </span>
-          )}
+          <span
+            className="close-button"
+            onClick={() => setShowProfileModal(false)}
+            style={{
+              position: "absolute",
+              top: "10px",
+              right: "15px",
+              fontSize: "24px",
+              cursor: "pointer",
+              color: "#333",
+              fontWeight: "bold"
+            }}
+          >
+            ×
+          </span>
           <h2>Complete Your Profile</h2>
           <p className="modal-intro">
             Please provide your information to complete your therapist profile. All fields are required.
@@ -381,7 +466,6 @@ const DoctorPage = () => {
                   <option value="">Select gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
-                  {/* Add more if needed */}
                 </select>
               </div>
             </div>
@@ -395,6 +479,71 @@ const DoctorPage = () => {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    );
+  };
+
+  // Modal for logout confirmation
+  const LogoutConfirmModal = () => {
+    return (
+      <div className={`modal ${showLogoutConfirm ? "show" : ""}`}>
+        <div className="modal-content" style={{ maxWidth: "400px", padding: "20px" }}>
+          <span
+            className="close-button"
+            onClick={cancelLogout}
+            style={{
+              position: "absolute",
+              top: "10px",
+              right: "15px",
+              fontSize: "24px",
+              cursor: "pointer",
+              color: "#333",
+              fontWeight: "bold"
+            }}
+          >
+            ×
+          </span>
+          <h2 style={{ marginBottom: "1rem" }}>Confirm Logout</h2>
+          <p style={{ marginBottom: "1.5rem", color: "#333" }}>
+            Are you sure you want to log out?
+          </p>
+          <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
+            <button
+              onClick={cancelLogout}
+              style={{
+                backgroundColor: "#6c757d",
+                color: "white",
+                border: "none",
+                padding: "0.5rem 1rem",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "1rem",
+                transition: "background-color 0.3s"
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#5a6268")}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#6c757d")}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmLogout}
+              style={{
+                backgroundColor: "#ff4d4d",
+                color: "white",
+                border: "none",
+                padding: "0.5rem 1rem",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "1rem",
+                transition: "background-color 0.3s"
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#cc0000")}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#ff4d4d")}
+            >
+              Yes, Log Out
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -425,6 +574,7 @@ const DoctorPage = () => {
           </div>
           <div className="main-content">{renderMainContent()}</div>
           <ProfileSetupModal />
+          <LogoutConfirmModal />
         </>
       )}
     </div>

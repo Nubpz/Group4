@@ -6,6 +6,7 @@ import StudentPage from './pages/StudentPage/StudentPage';
 import DoctorPage from './pages/DoctorPage';
 import AdminPage from './pages/AdminPage/AdminPage';
 import Chatbot from './pages/Chatbot';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
     <Chatbot />
     <Routes>
       <Route path="/" element={<LoginPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/parents" element={<ParentPage />} />
       <Route path="/students" element={<StudentPage />} />
       <Route path="/doctors" element={<DoctorPage />} />

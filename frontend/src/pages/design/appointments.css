@@ -1,7 +1,7 @@
 /* Appointments.css */
 
 /* Section Styling */
-.appointments-section {
+  .appointments-section {
     background-color: #fff;
     border-radius: 10px;
     padding: 20px;
@@ -408,6 +408,7 @@
     text-align: center;
     width: 100%;
   }
+
   
   /* Responsive Adjustments */
   @media (max-width: 768px) {

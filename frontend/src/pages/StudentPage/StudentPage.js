@@ -10,6 +10,94 @@ import BookAppointmentsTab from "./BookAppointmentsTab";
 import StudentProfileTab from "./StudentProfileTab";
 import ProfileCompletionModal from "./ProfileCompletionModal";
 
+// Sidebar menu definitions
+const menuItems = [
+  {
+    id: "home",
+    label: "Home",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+    ),
+  },
+  {
+    id: "my-appointments",
+    label: "My Appointments",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    ),
+  },
+  {
+    id: "book-appointment",
+    label: "Book Appointment",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="12" y1="18" x2="12" y2="12"></line>
+        <line x1="9" y1="15" x2="15" y2="15"></line>
+      </svg>
+    ),
+  },
+  {
+    id: "profile",
+    label: "Profile",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    ),
+  },
+];
+
 const StudentPage = () => {
   // ─────────── sidebar / tab ───────────
   const [selectedTab, setSelectedTab] = useState("home");
@@ -125,12 +213,23 @@ const StudentPage = () => {
   };
 
   const handleFinalBooking = async () => {
-    if (!selectedSlot) return;
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("You must be logged in to book an appointment.");
+    if (!selectedSlot) {
+      console.error("No slot selected for booking");
+      setBookingError("Please select a time slot.");
       return;
     }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found");
+      setBookingError("You must be logged in to book an appointment.");
+      return;
+    }
+    const payload = {
+      slotId: selectedSlot.id,
+      appointment_type: appointmentType,
+      reasonForMeeting: reasonForVisit,
+    };
+    console.log("Booking payload:", payload);
     try {
       const res = await fetch("http://localhost:3000/students/appointments", {
         method: "POST",
@@ -138,13 +237,10 @@ const StudentPage = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          slotId: selectedSlot.id,
-          appointment_type: appointmentType,
-          reasonForMeeting: reasonForVisit,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
+      console.log("Booking response:", data);
       if (!res.ok) {
         setBookingError(data.message || "Booking failed.");
         return;
@@ -173,6 +269,7 @@ const StudentPage = () => {
   // ───────── cancel & reschedule ─────────
   const handleCancelAppointment = async (appointmentId) => {
     const token = localStorage.getItem("token");
+    console.log("Canceling appointment:", appointmentId);
     try {
       const res = await fetch(
         "http://localhost:3000/students/appointments/cancel",
@@ -186,6 +283,7 @@ const StudentPage = () => {
         }
       );
       const data = await res.json();
+      console.log("Cancel response:", data);
       if (!res.ok) {
         alert(data.message || "Failed to cancel appointment.");
         return;
@@ -205,14 +303,22 @@ const StudentPage = () => {
           }
         });
     } catch (err) {
-      console.error("Cancel error:", err);
+      console.error("Cancel error:", err.message);
       alert("Failed to cancel appointment due to an error.");
     }
   };
 
   const handleRescheduleAppointment = async () => {
-    if (!appointmentToReschedule || !newSlotId) return;
+    if (!appointmentToReschedule || !newSlotId) {
+      console.error("Missing reschedule data:", { appointmentToReschedule, newSlotId });
+      return;
+    }
     const token = localStorage.getItem("token");
+    const payload = {
+      appointmentId: appointmentToReschedule.id,
+      newSlotId,
+    };
+    console.log("Rescheduling payload:", payload);
     try {
       const res = await fetch(
         "http://localhost:3000/students/appointments/reschedule",
@@ -222,13 +328,11 @@ const StudentPage = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            appointmentId: appointmentToReschedule.id,
-            newSlotId,
-          }),
+          body: JSON.stringify(payload),
         }
       );
       const data = await res.json();
+      console.log("Reschedule response:", data);
       if (!res.ok) {
         alert(data.message || "Reschedule failed.");
         return;
@@ -251,8 +355,8 @@ const StudentPage = () => {
           }
         });
     } catch (err) {
-      console.error("Reschedule error:", err);
-      alert("Reschedule failed due to an error.");
+      console.error("Reschedule error:", err.message);
+      alert("Failed to reschedule appointment due to an error.");
     }
   };
 
@@ -391,30 +495,16 @@ const StudentPage = () => {
       <div className="side-menu">
         <p className="greeting">{getGreeting()}</p>
         <ul>
-          <li
-            className={selectedTab === "home" ? "active" : ""}
-            onClick={() => setSelectedTab("home")}
-          >
-            Home
-          </li>
-          <li
-            className={selectedTab === "my-appointments" ? "active" : ""}
-            onClick={() => setSelectedTab("my-appointments")}
-          >
-            My Appointments
-          </li>
-          <li
-            className={selectedTab === "book-appointment" ? "active" : ""}
-            onClick={() => setSelectedTab("book-appointment")}
-          >
-            Book Appointment
-          </li>
-          <li
-            className={selectedTab === "profile" ? "active" : ""}
-            onClick={() => setSelectedTab("profile")}
-          >
-            Profile
-          </li>
+          {menuItems.map((item) => (
+            <li
+              key={item.id}
+              className={selectedTab === item.id ? "active" : ""}
+              onClick={() => setSelectedTab(item.id)}
+            >
+              <span className="menu-icon">{item.icon}</span>
+              <span className="menu-label">{item.label}</span>
+            </li>
+          ))}
         </ul>
       </div>
 

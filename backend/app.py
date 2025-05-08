@@ -57,12 +57,12 @@ app.config.update(
 mail = Mail(app)
 
 # Register route modules
-auth_routes(app, get_db_connection, bcrypt, create_access_token)
+auth_routes(app, get_db_connection, bcrypt, create_access_token, mail)
 admin_routes(app, get_db_connection, jwt_required, get_jwt_identity)
-therapist_routes(app, get_db_connection, jwt_required, get_jwt_identity)
+therapist_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail)
 parent_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail)
-student_routes(app, get_db_connection, jwt_required, get_jwt_identity)
 chatbot_routes(app, get_db_connection, jwt_required, get_jwt_identity)
+student_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail)
 # ... Add other routes here ...
 
 # --------------------
