@@ -20,7 +20,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
     @jwt_required()
     def get_all_users():
         token = json.loads(get_jwt_identity())
-        if token.get("role") != "admin" or not is_admin(token["userId"]):
+        if token.get("role") != "admin" or not is_admin(token["user_id"]):
             return jsonify({"message": "Unauthorized access."}), 403
 
         try:
@@ -74,7 +74,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
                    ELSE TRUE
               END          AS verified,
 
-              -- For parents: comma‑list of their children’s names
+              -- For parents: comma‑list of their children's names
               CASE WHEN u.ROLE='parent' THEN (
                 SELECT GROUP_CONCAT(CONCAT(st2.FirstName,' ',st2.LastName) SEPARATOR ', ')
                   FROM GUARDIAN g2
@@ -133,13 +133,13 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
     @jwt_required()
     def verify_therapist(user_id):
         token = json.loads(get_jwt_identity())
-        if token.get("role") != "admin" or not is_admin(token["userId"]):
+        if token.get("role") != "admin" or not is_admin(token["user_id"]):
             return jsonify({"message": "Unauthorized access."}), 403
 
         try:
             conn = get_db_connection()
             cur = conn.cursor(dictionary=True)
-            cur.execute("SELECT ADMIN_ID FROM ADMIN WHERE USER_ID = %s", (token["userId"],))
+            cur.execute("SELECT ADMIN_ID FROM ADMIN WHERE USER_ID = %s", (token["user_id"],))
             admin = cur.fetchone()
             if not admin:
                 cur.close(); conn.close()
@@ -165,7 +165,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
     @jwt_required()
     def unverify_therapist(user_id):
         token = json.loads(get_jwt_identity())
-        if token.get("role") != "admin" or not is_admin(token["userId"]):
+        if token.get("role") != "admin" or not is_admin(token["user_id"]):
             return jsonify({"message": "Unauthorized access."}), 403
 
         try:
@@ -191,7 +191,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
     @jwt_required()
     def get_dashboard_counts():
         token = json.loads(get_jwt_identity())
-        if token.get("role") != "admin" or not is_admin(token["userId"]):
+        if token.get("role") != "admin" or not is_admin(token["user_id"]):
             return jsonify({"message": "Unauthorized access."}), 403
 
         try:
@@ -239,7 +239,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
     @jwt_required()
     def get_recent_registrations():
         token = json.loads(get_jwt_identity())
-        if token.get("role") != "admin" or not is_admin(token["userId"]):
+        if token.get("role") != "admin" or not is_admin(token["user_id"]):
             return jsonify({"message": "Unauthorized access."}), 403
 
         limit = request.args.get("limit", default=5, type=int)

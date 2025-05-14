@@ -101,8 +101,18 @@ const PresetBlocksAvailability = () => {
     return `${hour}:${minute} ${ampm}`;
   };
 
+  const normalizeTime = (timeStr) => {
+    if (!timeStr) return '';
+    const [h, m] = timeStr.split(":");
+    return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
+  };
+
   const isSlotTaken = (dateStr, timeStr) => {
-    return availability.some((row) => row.Date === dateStr && row.Start_Time?.startsWith(timeStr));
+    return availability.some(
+      (row) =>
+        row.Date === dateStr &&
+        normalizeTime(row.Start_Time) === normalizeTime(timeStr)
+    );
   };
 
   const isPastTime = (dateStr, timeStr) => {
@@ -153,9 +163,9 @@ const PresetBlocksAvailability = () => {
 
     if (slotExists) {
       const slotToUpdate = availability.find(
-        (slot) => slot.Date === dateStr && slot.Start_Time.startsWith(startTime)
+        (slot) => slot.Date === dateStr && normalizeTime(slot.Start_Time) === normalizeTime(startTime)
       );
-      if (slotToUpdate.Status === "available") {
+      if (slotToUpdate && slotToUpdate.Status === "available") {
         setAvailability((prev) => prev.filter((slot) => slot.ID !== slotToUpdate.ID));
         try {
           const token = localStorage.getItem("token");
@@ -170,7 +180,7 @@ const PresetBlocksAvailability = () => {
           setError(err.message);
           fetchAvailability();
         }
-      } else {
+      } else if (slotToUpdate) {
         setAvailability((prev) =>
           prev.map((slot) =>
             slot.ID === slotToUpdate.ID ? { ...slot, Status: "available" } : slot

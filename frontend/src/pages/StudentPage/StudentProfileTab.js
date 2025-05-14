@@ -123,6 +123,32 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
     navigate("/");
   };
 
+  const handleSetLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      const token = localStorage.getItem("token");
+      try {
+        await fetch("http://localhost:3000/users/update-location", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ latitude, longitude }),
+        });
+        alert("Location updated!");
+      } catch (err) {
+        alert("Failed to update location.");
+      }
+    }, () => {
+      alert("Unable to retrieve your location.");
+    });
+  };
+
   if (!profile) {
     return <p className="no-data">Loading profile information...</p>;
   }
@@ -275,6 +301,7 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
                 >
                   Edit Profile
                 </button>
+                <button onClick={handleSetLocation} style={{marginTop: 12}}>Set My Location</button>
               </div>
             )}
           </div>

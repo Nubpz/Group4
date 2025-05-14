@@ -143,7 +143,9 @@ const AuthPage = () => {
         body: JSON.stringify(payload),
       });
       
+      console.log('Login response status:', response.status);  // Debug log
       const data = await response.json();
+      console.log('Login response data:', data);  // Debug log
   
       // Handle errors from login
       if (!response.ok) {

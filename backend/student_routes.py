@@ -10,7 +10,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             user_data = json.loads(identity)
             if user_data.get('role') != 'student':
                 return None
-            user_id = user_data.get('userId')
+            user_id = user_data.get('user_id')
             if not user_id:
                 return None
             conn = get_db_connection()

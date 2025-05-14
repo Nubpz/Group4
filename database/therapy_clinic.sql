@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS USERS (
   username VARCHAR(80) NOT NULL UNIQUE,
   password VARCHAR(200) NOT NULL,
   ROLE ENUM('admin', 'therapist', 'parent', 'student') NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  latitude DECIMAL(10, 8),
+  longitude DECIMAL(11, 8)
 );
 
 -- ADMIN table extending from USERS

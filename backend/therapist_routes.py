@@ -10,7 +10,7 @@ def extract_user_id():
             current = json.loads(current)
         except Exception as e:
             print("Error decoding JWT identity:", e)
-    return current.get("userId") if isinstance(current, dict) else current
+    return current.get("user_id") if isinstance(current, dict) else current
 
 def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
     """
@@ -27,7 +27,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             cursor = conn.cursor(dictionary=True)
             query = """
             SELECT 
-                u.USER_ID as user_id,
+                u.USER_ID as userID,
                 u.username,
                 t.FirstName as first_name,
                 t.LastName as last_name,
@@ -83,7 +83,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             cursor = conn.cursor(dictionary=True)
             select_query = """
             SELECT 
-                u.USER_ID as user_id,
+                u.USER_ID as userID,
                 u.username,
                 t.FirstName as first_name,
                 t.LastName as last_name,

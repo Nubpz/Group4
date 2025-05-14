@@ -1,0 +1,48 @@
+.admin-page {
+  padding: 20px;
+}
+
+.map-section {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 180px;
+  height: 180px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.map-section h2 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+/* Leaflet map container */
+.leaflet-container {
+  height: 180px;
+  width: 180px;
+  margin: 0 auto;
+  border-radius: 4px;
+}
+
+/* Marker popup styles */
+.leaflet-popup-content {
+  margin: 0;
+  padding: 10px;
+}
+
+.leaflet-popup-content h3 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+}
+
+.leaflet-popup-content p {
+  margin: 5px 0;
+  font-size: 14px;
+} 

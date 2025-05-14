@@ -43,24 +43,37 @@ export default function HomeTab({
      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
   };
 
+  const formatTimeString = (timeStr) => {
+    if (!timeStr) return "Invalid time";
+    // Ensure the time string has the correct format (HH:MM:SS or HH:MM)
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return "Invalid time";
+    
+    // Pad hours and minutes with zeros if needed
+    const hours = parts[0].padStart(2, '0');
+    const minutes = parts[1].padStart(2, '0');
+    const seconds = parts.length > 2 ? parts[2].padStart(2, '0') : '00';
+    
+    return `${hours}:${minutes}:${seconds}`;
+  };
+
   // Available therapists for the calendar grid (limited to 4 for display)
   const availableTherapists = availableSlots
     .map((group) => {
       const today = new Date(now).setHours(0, 0, 0, 0);
-      return{
-      name: group.therapist_name,
-      id: group.therapist_id,
-      slots: group.appointments
-        .filter(
-          (slot) => {
+      return {
+        name: group.therapist_name,
+        id: group.therapist_id,
+        slots: group.appointments
+          .filter((slot) => {
             const slotDate = normalizeDate(slot.date).getTime();
             return slotDate >= today;
           })
-        .sort(
-          (a, b) =>
-            new Date(`${a.date}T${a.start_time}`) -
-            new Date(`${b.date}T${b.start_time}`)
-        ),
+          .sort((a, b) => {
+            const dateA = new Date(`${a.date}T${formatTimeString(a.start_time)}`);
+            const dateB = new Date(`${b.date}T${formatTimeString(b.start_time)}`);
+            return dateA - dateB;
+          }),
       };
     })
     .filter((t) => t.slots.length > 0)
@@ -90,17 +103,31 @@ export default function HomeTab({
           therapistId: therapist.id,
           therapistName: therapist.name,
           color: therapistColors[availableTherapists.findIndex(t => t.id === therapist.id) % therapistColors.length],
-          slots: slots.map((slot) => ({
-            ...slot,
-            startTime: new Date(`${slot.date}T${slot.start_time}`).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            endTime: new Date(`${slot.date}T${slot.end_time}`).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          })),
+          slots: slots.map((slot) => {
+            try {
+              const startDateTime = new Date(`${slot.date}T${formatTimeString(slot.start_time)}`);
+              const endDateTime = new Date(`${slot.date}T${formatTimeString(slot.end_time)}`);
+              
+              return {
+                ...slot,
+                startTime: !isNaN(startDateTime) ? startDateTime.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }) : "Invalid time",
+                endTime: !isNaN(endDateTime) ? endDateTime.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }) : "Invalid time",
+              };
+            } catch (error) {
+              console.error("Error formatting time for slot:", slot, error);
+              return {
+                ...slot,
+                startTime: "Invalid time",
+                endTime: "Invalid time",
+              };
+            }
+          }),
         };
       });
     return { day, slots: slotsOnDay };
@@ -117,7 +144,7 @@ export default function HomeTab({
       <section className="welcome-section">
         <div className="welcome-header">
           <h2>{getGreeting()}</h2>
-          <p>Your family’s care starts here!</p>
+          <p>Your family's care starts here!</p>
           <div className="shine-effect" />
         </div>
       </section>

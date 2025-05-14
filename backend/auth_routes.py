@@ -1,6 +1,7 @@
 from flask import request, jsonify
 import datetime
 import json
+import mysql.connector
 
 def register_routes(app, get_db_connection, bcrypt, create_access_token):
     """
@@ -99,85 +100,80 @@ def register_routes(app, get_db_connection, bcrypt, create_access_token):
     # --------------------
     @app.route('/auth/login', methods=['POST'])
     def login():
-        data = request.get_json()
-        username = data.get("username")
-        password = data.get("password")
-        role = data.get("role")  # Role is optional during login
-
-        if not username or not password:
-            return jsonify({"message": "Missing username or password."}), 400
-
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        
-        # First check if user exists in USERS table
-        cursor.execute("SELECT * FROM USERS WHERE username = %s", (username,))
-        user = cursor.fetchone()
-        
-        if not user:
-            cursor.close()
-            conn.close()
-            return jsonify({"message": "Invalid username or password."}), 401
-
-        if not bcrypt.check_password_hash(user["password"], password):
-            cursor.close()
-            conn.close()
-            return jsonify({"message": "Invalid username or password."}), 401
-
-        # If role is specified, check if user has that role
-        if role and user["ROLE"] != role:
-            cursor.close()
-            conn.close()
-            return jsonify({"message": "Invalid role for this account."}), 401
-
-        # Get user details based on their role
-        user_role = user["ROLE"]
-        user_id = user["USER_ID"]
-        
-        user_details = None
-        
-        if user_role == "parent":
-            cursor.execute("SELECT * FROM PARENT WHERE USER_ID = %s", (user_id,))
-            user_details = cursor.fetchone()
-        elif user_role == "student":
-            cursor.execute("SELECT * FROM STUDENT WHERE USER_ID = %s", (user_id,))
-            user_details = cursor.fetchone()
-        elif user_role == "therapist":
-            cursor.execute("SELECT * FROM THERAPIST WHERE USER_ID = %s", (user_id,))
-            user_details = cursor.fetchone()
+        try:
+            data = request.get_json()
+            print("Received login request with data:", data)  # Debug log
             
-            # If therapist is not verified, don't allow login
-            if user_details and user_details.get("ADMIN_ID") is None:
+            username = data.get('username')
+            password = data.get('password')
+            role = data.get('role', '')  # Get role if provided
+
+            print(f"Login attempt for username: {username}, role: {role}")  # Debug log
+
+            if not username or not password:
+                print("Missing username or password")  # Debug log
+                return jsonify({'message': 'Username and password are required'}), 400
+
+            try:
+                conn = get_db_connection()
+                cursor = conn.cursor(dictionary=True)
+                print("Database connection successful")  # Debug log
+
+                # Check if user exists
+                query = "SELECT * FROM USERS WHERE username = %s"
+                cursor.execute(query, (username,))
+                user = cursor.fetchone()
+                print("User query result:", user)  # Debug log
+
+                if not user:
+                    print(f"User not found: {username}")  # Debug log
+                    return jsonify({'message': 'Invalid username or password'}), 401
+
+                # Verify password
+                if not bcrypt.check_password_hash(user['password'], password):
+                    print(f"Invalid password for user: {username}")  # Debug log
+                    return jsonify({'message': 'Invalid username or password'}), 401
+
+                # If role is provided, verify it matches
+                if role and user['ROLE'].lower() != role.lower():
+                    print(f"Role mismatch for user: {username}. Expected: {role}, Got: {user['ROLE']}")  # Debug log
+                    return jsonify({'message': 'Invalid role'}), 401
+
+                # For therapists, check if they're verified
+                if user['ROLE'].lower() == 'therapist':
+                    cursor.execute("SELECT ADMIN_ID FROM THERAPIST WHERE USER_ID = %s", (user['USER_ID'],))
+                    therapist = cursor.fetchone()
+                    if not therapist or not therapist['ADMIN_ID']:
+                        return jsonify({'message': 'Your account is awaiting admin verification'}), 403
+
+                # Create JWT token
+                token = create_access_token(identity=json.dumps({
+                    'user_id': user['USER_ID'],
+                    'username': user['username'],
+                    'role': user['ROLE'].lower()
+                }))
+
                 cursor.close()
                 conn.close()
-                return jsonify({"message": "Your account is awaiting admin verification."}), 403
-        elif user_role == "admin":
-            cursor.execute("SELECT * FROM ADMIN WHERE USER_ID = %s", (user_id,))
-            user_details = cursor.fetchone()
-        
-        cursor.close()
-        conn.close()
-        
-        if not user_details:
-            return jsonify({"message": "User details not found."}), 404
 
-        # Create token with user info
-        token_data = json.dumps({
-            "userId": user_id,
-            "username": username,
-            "role": user_role
-        })
+                print(f"Successful login for user: {username}")  # Debug log
+                return jsonify({
+                    'token': token,
+                    'message': 'Login successful',
+                    'user': {
+                        'userID': user['USER_ID'],
+                        'username': user['username'],
+                        'role': user['ROLE'].lower()
+                    }
+                })
 
-        access_token = create_access_token(
-            identity=token_data,
-            expires_delta=datetime.timedelta(hours=1)
-        )
+            except mysql.connector.Error as err:
+                print(f"Database error: {err}")  # Debug log
+                return jsonify({'message': 'Database error occurred'}), 500
 
-        return jsonify({
-            "token": access_token, 
-            "message": "Logged in successfully.",
-            "role": user_role
-        }), 200
+        except Exception as e:
+            print(f"Login error: {str(e)}")  # Debug log
+            return jsonify({'message': 'An error occurred. Please try again.'}), 500
 
     # --------------------
     # Check User Roles

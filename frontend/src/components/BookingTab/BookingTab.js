@@ -25,7 +25,7 @@ const BookingTab = () => {
 
   const fetchTherapists = async () => {
     try {
-      const response = await axios.get('/api/therapists');
+      const response = await axios.get('http://localhost:3000/api/therapists');
       setTherapists(response.data);
     } catch (error) {
       setBookingStatus({
@@ -37,7 +37,7 @@ const BookingTab = () => {
 
   const fetchAvailableSlots = async () => {
     try {
-      const response = await axios.get(`/api/appointments/available-slots`, {
+      const response = await axios.get('http://localhost:3000/api/appointments/available-slots', {
         params: {
           therapist_id: selectedTherapist,
           date: selectedDate

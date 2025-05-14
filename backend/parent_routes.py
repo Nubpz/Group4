@@ -20,7 +20,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 current_identity = json.loads(current_identity)
             except Exception as e:
                 print("JWT decoding error:", e)
-        return current_identity.get("userId") if isinstance(current_identity, dict) else current_identity
+        return current_identity.get("user_id") if isinstance(current_identity, dict) else current_identity
 
     # --- Get Parent Profile ---
     @app.route("/parents/profile", methods=["GET"])
@@ -32,7 +32,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             cursor = conn.cursor(dictionary=True)
             query = """
                 SELECT 
-                    u.USER_ID as user_id,
+                    u.USER_ID as userID,
                     u.username,
                     p.FirstName as first_name,
                     p.LastName as last_name,
@@ -108,7 +108,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             # Fetch the updated profile
             cursor.execute("""
                 SELECT 
-                    u.USER_ID as user_id,
+                    u.USER_ID as userID,
                     u.username,
                     p.FirstName as first_name,
                     p.LastName as last_name,

@@ -3,4 +3,8 @@ Flask-Cors
 mysql-connector-python
 Flask-Bcrypt
 Flask-JWT-Extended
+Flask-Mail
+python-dotenv
+python-dateutil
+spacy
 

@@ -126,7 +126,7 @@ const TDashboard = ({ therapistInfo }) => {
       (appt) => new Date(appt.Appointment_time).toDateString() === new Date().toDateString()
     ).length;
     if (todayAppts > 5) return "Busy day ahead! Take a deep breath and tackle it one step at a time.";
-    if (todayAppts > 0) return "A balanced day awaits. You’ve got this!";
+    if (todayAppts > 0) return "A balanced day awaits. You've got this!";
     return "A light day—perfect for planning or a well-deserved break.";
   };
 
@@ -146,6 +146,32 @@ const TDashboard = ({ therapistInfo }) => {
     ).length,
   };
 
+  const handleSetLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      const token = localStorage.getItem("token");
+      try {
+        await fetch("http://localhost:3000/users/update-location", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ latitude, longitude }),
+        });
+        alert("Location updated!");
+      } catch (err) {
+        alert("Failed to update location.");
+      }
+    }, () => {
+      alert("Unable to retrieve your location.");
+    });
+  };
+
   return (
     <div className="tdashboard-section">
       {loading ? (
@@ -163,7 +189,7 @@ const TDashboard = ({ therapistInfo }) => {
               <h3 className="animated-count" data-count={todayStats.total}>
                 {todayStats.total}
               </h3>
-              <p>Today’s Appointments</p>
+              <p>Today's Appointments</p>
             </div>
             <div className="stat-card">
               <h3 className="animated-count" data-count={todayStats.pending}>
@@ -181,7 +207,7 @@ const TDashboard = ({ therapistInfo }) => {
 
           {/* Interactive Timeline */}
           <div className="timeline-container">
-            <h2>Today’s Timeline</h2>
+            <h2>Today's Timeline</h2>
             <div className="timeline">
               {todayAppointments.length === 0 ? (
                 <p>No appointments today.</p>
@@ -245,6 +271,8 @@ const TDashboard = ({ therapistInfo }) => {
               </div>
             </div>
           )}
+
+          <button onClick={handleSetLocation} style={{marginTop: 12}}>Set My Location</button>
         </>
       )}
     </div>
