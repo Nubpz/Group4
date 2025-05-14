@@ -9,8 +9,6 @@ import random
 import string
 from utils.emailer import send_reset_code_email
 
-app = Flask(__name__)
-mail = Mail(app)
 reset_codes = {}
 
 def register_routes(app, get_db_connection, bcrypt, create_access_token):
