@@ -1,7 +1,17 @@
-from flask import request, jsonify
+from flask import request, jsonify, Flask
 import datetime
 import json
 import mysql.connector
+import secrets
+import datetime
+from flask_mail import Mail, Message
+import random
+import string
+from utils.emailer import send_reset_code_email
+
+app = Flask(__name__)
+mail = Mail(app)
+reset_codes = {}
 
 def register_routes(app, get_db_connection, bcrypt, create_access_token):
     """
@@ -214,12 +224,98 @@ def register_routes(app, get_db_connection, bcrypt, create_access_token):
         if not username:
             return jsonify({"message": "Email address is required."}), 400
         
-        # Note: In a real implementation, you would:
-        # 1. Generate a secure token
-        # 2. Store it in the database with an expiration time
-        # 3. Send an email with a reset link
-        # Here we're just returning a success message
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
         
+        # Check if user exists
+        cursor.execute("SELECT USER_ID FROM USERS WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            # Generic message to prevent user enumeration
+            return jsonify({
+                "message": "If your email is registered, you will receive a password reset code."
+            }), 200
+        
+        try:
+            # Generate a 6-digit code
+            reset_code = ''.join(random.choices(string.digits, k=6))
+            expiry = datetime.datetime.now() + datetime.timedelta(minutes=5)  # 5-minute expiration
+            
+            # Store code in-memory
+            reset_codes[user["USER_ID"]] = {"code": reset_code, "expiry": expiry}
+            
+            # Send email with reset code
+            send_reset_code_email(mail, username, reset_code)
+            
+        except Exception as e:
+            cursor.close()
+            conn.close()
+            return jsonify({"message": f"Failed to process request: {str(e)}"}), 500
+        
+        cursor.close()
+        conn.close()
         return jsonify({
-            "message": "If your email is registered, you will receive password reset instructions."
+            "message": "If your email is registered, you will receive a password reset code."
         }), 200
+
+    # Password Reset Confirmation
+    @app.route('/auth/reset-password/confirm', methods=['POST'])
+    def reset_password_confirm():
+        data = request.get_json()
+        username = data.get("username")
+        code = data.get("code")
+        new_password = data.get("password")
+        
+        if not username or not code or not new_password:
+            return jsonify({"message": "Username, code, and new password are required."}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get user ID
+        cursor.execute("SELECT USER_ID FROM USERS WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            return jsonify({"message": "Invalid username or code."}), 400
+        
+        user_id = user["USER_ID"]
+        
+        # Check if code is valid
+        if user_id not in reset_codes:
+            cursor.close()
+            conn.close()
+            return jsonify({"message": "Invalid or expired code."}), 400
+        
+        stored_code = reset_codes[user_id]
+        if stored_code["code"] != code or stored_code["expiry"] < datetime.datetime.now():
+            cursor.close()
+            conn.close()
+            return jsonify({"message": "Invalid or expired code."}), 400
+        
+        try:
+            # Update user's password
+            hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+            cursor.execute(
+                "UPDATE USERS SET password = %s WHERE USER_ID = %s",
+                (hashed_password, user_id)
+            )
+            conn.commit()
+            
+            # Remove the used code
+            del reset_codes[user_id]
+            
+            cursor.close()
+            conn.close()
+            return jsonify({"message": "Password reset successfully."}), 200
+            
+        except Exception as e:
+            conn.rollback()
+            cursor.close()
+            conn.close()
+            return jsonify({"message": f"Failed to reset password: {str(e)}"}), 500

@@ -38,7 +38,7 @@ CORS(app, resources={
 db_config = {
     'host': 'localhost',
     'user': 'root',               
-    'password': 'Bd2222Mo?',   
+    'password': 'University24@',   
     'database': 'therapy_clinic',  
     'port': 3306
 }

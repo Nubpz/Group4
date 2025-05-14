@@ -235,6 +235,14 @@ def send_reset_code_email(mail, to_email, reset_code):
     """
     print(f"Attempting to send reset code email to {to_email}")
     try:
+        # Test SMTP connection
+        with mail.connect() as conn:
+            print("SMTP connection successful!")
+    except Exception as e:
+        print(f"SMTP connection failed: {e}")
+        return
+    
+    try:
         mail.send(Message(subject=subj, recipients=[to_email], html=html))
         app.logger.info("Reset code email sent to %s", to_email)
         print(f"Reset code email sent successfully to {to_email}")
