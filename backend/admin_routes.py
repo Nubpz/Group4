@@ -31,7 +31,6 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             SELECT
               u.USER_ID    AS id,
               u.username   AS username,
-              -- Hide student email if they have any guardian link
               CASE
                 WHEN u.ROLE = 'student' AND EXISTS (
                   SELECT 1
@@ -42,47 +41,37 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
                 THEN NULL
                 ELSE u.username
               END          AS email,
-              
               u.ROLE       AS role,
               u.created_at AS created_at,
-
-              p.PARENT_ID  AS parent_id,   -- for children lookup
-              s.STUDENT_ID AS student_id,  -- for guardian lookup
-
+              u.latitude   AS latitude,  -- Added
+              u.longitude  AS longitude, -- Added
+              p.PARENT_ID  AS parent_id,
+              s.STUDENT_ID AS student_id,
               CASE WHEN u.ROLE='parent'    THEN p.FirstName
                    WHEN u.ROLE='student'   THEN s.FirstName
                    WHEN u.ROLE='therapist' THEN t.FirstName
               END          AS first_name,
-
               CASE WHEN u.ROLE='parent'    THEN p.LastName
                    WHEN u.ROLE='student'   THEN s.LastName
                    WHEN u.ROLE='therapist' THEN t.LastName
               END          AS last_name,
-
               CASE WHEN u.ROLE='parent'    THEN p.Gender
                    WHEN u.ROLE='student'   THEN s.Gender
                    WHEN u.ROLE='therapist' THEN t.Gender
               END          AS gender,
-
               CASE WHEN u.ROLE='parent'    THEN p.DOB
                    WHEN u.ROLE='student'   THEN s.DOB
               END          AS dob,
-
-              -- Only therapists get a certNumber+verified
               CASE WHEN u.ROLE='therapist' THEN t.CERT_Number END AS certNumber,
               CASE WHEN u.ROLE='therapist' THEN (t.ADMIN_ID IS NOT NULL)
                    ELSE TRUE
               END          AS verified,
-
-              -- For parents: comma‑list of their children’s names
               CASE WHEN u.ROLE='parent' THEN (
                 SELECT GROUP_CONCAT(CONCAT(st2.FirstName,' ',st2.LastName) SEPARATOR ', ')
                   FROM GUARDIAN g2
                   JOIN STUDENT   st2 ON g2.STUDENT_ID = st2.STUDENT_ID
                  WHERE g2.PARENT_ID = p.PARENT_ID
               ) ELSE NULL END AS children_names,
-
-              -- For students: comma‑list of their guardian names + relation
               CASE WHEN u.ROLE='student' THEN (
                 SELECT GROUP_CONCAT(
                     CONCAT(p2.FirstName,' ',p2.LastName,' (',g2.Relation,')') 
@@ -91,8 +80,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
                 FROM GUARDIAN g2
                 JOIN PARENT    p2 ON g2.PARENT_ID = p2.PARENT_ID
                 WHERE g2.STUDENT_ID = s.STUDENT_ID
-              )ELSE NULL END AS guardian_info
-
+              ) ELSE NULL END AS guardian_info
             FROM USERS u
             LEFT JOIN PARENT    p ON u.USER_ID = p.USER_ID    AND u.ROLE = 'parent'
             LEFT JOIN STUDENT   s ON u.USER_ID = s.USER_ID    AND u.ROLE = 'student'
@@ -104,7 +92,6 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             cur.execute(query)
             users = cur.fetchall()
 
-            # For parents, attach detailed children arrays if needed
             for u in users:
                 if u["role"] == "parent" and u.get("parent_id"):
                     c2 = conn.cursor(dictionary=True)
@@ -129,6 +116,40 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
         except Exception as exc:
             return jsonify({"message": f"Error fetching users: {exc}"}), 500
 
+    @app.route("/user/location", methods=["PUT"])
+    @jwt_required()
+    def update_user_location():
+        token = json.loads(get_jwt_identity())
+        user_id = token["userId"]
+
+        try:
+            data = request.get_json()
+            latitude = data.get("latitude")
+            longitude = data.get("longitude")
+
+            if latitude is None or longitude is None:
+                return jsonify({"message": "Latitude and longitude are required."}), 400
+
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE USERS SET latitude = %s, longitude = %s WHERE USER_ID = %s",
+                (latitude, longitude, user_id)
+            )
+            if cur.rowcount == 0:
+                conn.rollback()
+                cur.close()
+                conn.close()
+                return jsonify({"message": "User not found."}), 404
+
+            conn.commit()
+            cur.close()
+            conn.close()
+            return jsonify({"message": "Location updated successfully."}), 200
+
+        except Exception as exc:
+            return jsonify({"message": f"Error updating location: {exc}"}), 500
+
     @app.route("/admin/verify/<int:user_id>", methods=["PUT"])
     @jwt_required()
     def verify_therapist(user_id):
@@ -142,7 +163,8 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             cur.execute("SELECT ADMIN_ID FROM ADMIN WHERE USER_ID = %s", (token["userId"],))
             admin = cur.fetchone()
             if not admin:
-                cur.close(); conn.close()
+                cur.close()
+                conn.close()
                 return jsonify({"message": "Admin not found."}), 404
 
             cur.execute(
@@ -151,11 +173,13 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             )
             if cur.rowcount == 0:
                 conn.rollback()
-                cur.close(); conn.close()
+                cur.close()
+                conn.close()
                 return jsonify({"message": "Therapist not found or already verified."}), 404
 
             conn.commit()
-            cur.close(); conn.close()
+            cur.close()
+            conn.close()
             return jsonify({"message": "Therapist verified."}), 200
 
         except Exception as exc:
@@ -177,11 +201,13 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             )
             if cur.rowcount == 0:
                 conn.rollback()
-                cur.close(); conn.close()
+                cur.close()
+                conn.close()
                 return jsonify({"message": "Therapist not found or already unverified."}), 404
 
             conn.commit()
-            cur.close(); conn.close()
+            cur.close()
+            conn.close()
             return jsonify({"message": "Therapist unverified."}), 200
 
         except Exception as exc:
@@ -223,7 +249,8 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
             """)
             pending = cur.fetchone()["n"]
 
-            cur.close(); conn.close()
+            cur.close()
+            conn.close()
             return jsonify({
                 "totalUsers": total,
                 "parentCount": parents,
@@ -272,7 +299,8 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
                 (limit,),
             )
             recent = cur.fetchall()
-            cur.close(); conn.close()
+            cur.close()
+            conn.close()
             return jsonify({"users": recent}), 200
 
         except Exception as exc:

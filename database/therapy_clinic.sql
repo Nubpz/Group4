@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS USERS (
   username VARCHAR(80) NOT NULL UNIQUE,
   password VARCHAR(200) NOT NULL,
   ROLE ENUM('admin', 'therapist', 'parent', 'student') NOT NULL,
+  latitude DECIMAL(9,6) NULL,
+  longitude DECIMAL(9,6) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
