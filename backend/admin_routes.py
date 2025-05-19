@@ -1,6 +1,7 @@
 # admin_routes.py
 from flask import request, jsonify
 import json
+import mysql.connector
 
 def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
     """
@@ -43,8 +44,8 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
               END          AS email,
               u.ROLE       AS role,
               u.created_at AS created_at,
-              u.latitude   AS latitude,  -- Added
-              u.longitude  AS longitude, -- Added
+              u.latitude   AS latitude,
+              u.longitude  AS longitude,
               p.PARENT_ID  AS parent_id,
               s.STUDENT_ID AS student_id,
               CASE WHEN u.ROLE='parent'    THEN p.FirstName
@@ -305,3 +306,82 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity):
 
         except Exception as exc:
             return jsonify({"message": f"Error fetching recent regs: {exc}"}), 500
+
+    @app.route("/user/locations", methods=["GET"])
+    @jwt_required()
+    def get_all_user_locations():
+        token = json.loads(get_jwt_identity())
+        if token.get("role") != "admin" or not is_admin(token["userId"]):
+            return jsonify({"message": "Unauthorized access."}), 403
+
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor(dictionary=True)
+            query = """
+            SELECT 
+                u.USER_ID AS user_id,
+                u.username,
+                u.role,
+                u.latitude,
+                u.longitude,
+                COALESCE(t.FirstName, s.FirstName, p.FirstName, u.username, 'Unknown') AS first_name,
+                COALESCE(t.LastName, s.LastName, p.LastName, '') AS last_name
+            FROM USERS u
+            LEFT JOIN THERAPIST t ON u.USER_ID = t.USER_ID AND u.role = 'therapist'
+            LEFT JOIN STUDENT s ON u.USER_ID = s.USER_ID AND u.role = 'student'
+            LEFT JOIN PARENT p ON u.USER_ID = p.USER_ID AND u.role = 'parent'
+            LEFT JOIN ADMIN a ON u.USER_ID = a.USER_ID AND u.role = 'admin'
+            WHERE u.latitude IS NOT NULL AND u.longitude IS NOT NULL
+            ORDER BY u.username
+            """
+            cur.execute(query)
+            users = cur.fetchall()
+            cur.close()
+            conn.close()
+            return jsonify(users), 200
+        except mysql.connector.Error as err:
+            print(f"Error fetching user locations: {err}")
+            return jsonify({"message": "Database error occurred."}), 500
+        finally:
+            if 'cur' in locals():
+                cur.close()
+            if 'conn' in locals():
+                conn.close()
+
+    @app.route("/admin/profile", methods=["GET"])
+    @jwt_required()
+    def get_admin_profile():
+        token = json.loads(get_jwt_identity())
+        user_id = token["userId"]
+        if token.get("role") != "admin" or not is_admin(user_id):
+            return jsonify({"message": "Unauthorized access."}), 403
+
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor(dictionary=True)
+            query = """
+            SELECT 
+                u.USER_ID AS user_id,
+                u.username,
+                u.role,
+                u.latitude,
+                u.longitude,
+                u.username AS first_name,
+                '' AS last_name
+            FROM USERS u
+            JOIN ADMIN a ON u.USER_ID = a.USER_ID
+            WHERE u.USER_ID = %s
+            """
+            cur.execute(query, (user_id,))
+            admin = cur.fetchone()
+            if not admin:
+                return jsonify({"message": "Admin not found."}), 404
+            return jsonify(admin), 200
+        except mysql.connector.Error as err:
+            print(f"Database error in get_admin_profile: {err}")
+            return jsonify({"message": "Database error occurred."}), 500
+        finally:
+            if 'cur' in locals():
+                cur.close()
+            if 'conn' in locals():
+                conn.close()

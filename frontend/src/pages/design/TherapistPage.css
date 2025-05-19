@@ -765,3 +765,50 @@ body {
   padding: 20px;
 }
 
+.time-btn {
+  padding: 8px 12px;
+  margin: 4px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.time-btn.available {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.time-btn.taken {
+  background-color: #ff9800;
+  color: white;
+}
+
+.time-btn.past {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.time-btn.disabled {
+  background-color: #e0e0e0;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.time-btn.overlaps {
+  background-color: #f44336;
+  color: white;
+  cursor: not-allowed;
+}
+
+.time-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Optional: Enhance tooltip visibility */
+.time-btn:hover {
+  opacity: 0.9;
+}

@@ -8,9 +8,6 @@ import HomeTab from "./HomeTab";
 import AccountsTab from "./AccountsTab";
 import BookingTab from "./BookingTab";
 
-// your emailer utils (if used)
-//import { send_appt_email, notify_parent_for_appt } from "../utils/emailer";
-
 // Sidebar menu definitions
 const menuItems = [
   {
@@ -175,6 +172,16 @@ const ParentPage = () => {
 
   const navigate = useNavigate();
 
+  // Clear booking message after 5 seconds
+  useEffect(() => {
+    if (bookingMsg) {
+      const timer = setTimeout(() => {
+        setBookingMsg("");
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [bookingMsg]);
+
   // ───────── fetch available slots ─────────
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -286,7 +293,7 @@ const ParentPage = () => {
         })
         .catch(() => setError("Failed to fetch children data"));
     }
-  }, [navigate, hasFetchedChildren]); // Only depend on navigate
+  }, [navigate, hasFetchedChildren]);
 
   // Separate effect to set selectedChildId after childrenData is populated
   useEffect(() => {
@@ -297,7 +304,7 @@ const ParentPage = () => {
 
   // ───────── home appointments ─────────
   useEffect(() => {
-    if (selectedTab === "home") {
+    if (selectedTab === "home" || selectedTab === "appointments") {
       const token = localStorage.getItem("token");
       fetch("http://localhost:3000/parents/appointments", {
         headers: { Authorization: `Bearer ${token}` },
@@ -384,6 +391,7 @@ const ParentPage = () => {
       setChildrenData([...childrenData, data.child]);
       if (!selectedChildId) setSelectedChildId(data.child.id);
       setShowModal(false);
+      setNewChild({ firstName: "", lastName: "", dateOfBirth: "", gender: "" });
     } catch {
       setError("Failed to add child.");
     }
@@ -634,10 +642,12 @@ const ParentPage = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("You must be logged in to book an appointment.");
+      setBookingError("You must be logged in to book an appointment.");
       return;
     }
     if (!selectedChildId) {
       console.error("Please select a child to book for.");
+      setBookingError("Please select a child to book for.");
       return;
     }
     try {
@@ -659,8 +669,20 @@ const ParentPage = () => {
         setBookingError(data.message || "Booking failed.");
         return;
       }
-      setBookingMsg("Appointment booked successfully!");
+      setBookingMsg(data.message || "Appointment booked successfully!");
       resetBooking();
+      // Refresh appointments
+      fetch("http://localhost:3000/parents/appointments", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.appointments) {
+            setAppointments(
+              data.appointments.filter((app) => app.status !== "cancelled")
+            );
+          }
+        });
     } catch (err) {
       console.error("Booking error:", err.message);
       setBookingError("Booking failed due to an error.");
@@ -680,12 +702,12 @@ const ParentPage = () => {
         body: JSON.stringify({ appointmentId }),
       });
       if (!res.ok) {
-        return;
+        throw new Error("Failed to cancel appointment.");
       }
       fetchChildAppointments();
     } catch (err) {
       console.error("Cancel error:", err);
-      
+      throw err;
     }
   };
 
@@ -704,15 +726,31 @@ const ParentPage = () => {
           newSlotId,
         }),
       });
+      const data = await res.json();
       if (!res.ok) {
+        setBookingError(data.message || "Failed to reschedule appointment.");
         return;
       }
+      setBookingMsg(data.message || "Appointment rescheduled successfully!");
       setShowRescheduleModal(false);
       setNewSlotId(null);
       setAppointmentToReschedule(null);
       fetchChildAppointments();
+      // Refresh appointments
+      fetch("http://localhost:3000/parents/appointments", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.appointments) {
+            setAppointments(
+              data.appointments.filter((app) => app.status !== "cancelled")
+            );
+          }
+        });
     } catch (err) {
       console.error("Reschedule error:", err);
+      setBookingError("Failed to reschedule appointment due to an error.");
     }
   };
 
@@ -821,6 +859,7 @@ const ParentPage = () => {
             bookingMsg={bookingMsg}
             categorizeSlots={categorizeSlots}
             formatTime={formatTime}
+            appointments={appointments}
           />
         );
       case "profile":

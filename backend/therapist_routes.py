@@ -34,7 +34,9 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 t.LastName as last_name,
                 t.Gender as gender,
                 t.CERT_Number as cert_number,
-                t.ADMIN_ID as verified
+                t.ADMIN_ID as verified,
+                u.latitude,
+                u.longitude
             FROM USERS u
             JOIN THERAPIST t ON u.USER_ID = t.USER_ID
             WHERE u.USER_ID = %s
@@ -90,7 +92,9 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 t.LastName as last_name,
                 t.Gender as gender,
                 t.CERT_Number as cert_number,
-                t.ADMIN_ID as verified
+                t.ADMIN_ID as verified,
+                u.latitude,
+                u.longitude
             FROM USERS u
             JOIN THERAPIST t ON u.USER_ID = t.USER_ID
             WHERE u.USER_ID = %s
@@ -463,5 +467,6 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 cursor.close()
             if 'conn' in locals():
                 conn.close()
+
 
     return app

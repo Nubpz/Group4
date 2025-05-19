@@ -1,3 +1,4 @@
+# student_routes.py
 from flask import jsonify, request
 from datetime import datetime
 import json
@@ -32,6 +33,33 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             print(f"Error verifying student: {e}")
             return None
 
+    def verify_therapist(identity):
+        try:
+            user_data = json.loads(identity)
+            if user_data.get('role') != 'therapist':
+                print(f"Invalid role: {user_data.get('role')}")
+                return None
+            user_id = user_data.get('userId')
+            if not user_id:
+                print("No userId in JWT")
+                return None
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute(
+                "SELECT THERAPIST_ID FROM THERAPIST WHERE USER_ID = %s", (user_id,)
+            )
+            therapist = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            if not therapist:
+                print(f"No therapist found for user_id: {user_id}")
+                return None
+            print(f"Verified therapist: therapist_id={therapist['THERAPIST_ID']}, user_id={user_id}")
+            return therapist['THERAPIST_ID'], user_id
+        except Exception as e:
+            print(f"Error verifying therapist: {e}")
+            return None
+
     @app.route('/students/profile', methods=['GET'])
     @jwt_required()
     def student_get_profile():
@@ -45,7 +73,8 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             cursor.execute(
                 """
                 SELECT s.STUDENT_ID, s.FirstName AS first_name, s.LastName AS last_name,
-                       s.DOB, s.Gender AS gender, s.Phone_number AS phone_number, u.username
+                       s.DOB, s.Gender AS gender, s.Phone_number AS phone_number, u.username,
+                       u.latitude, u.longitude
                 FROM STUDENT s
                 JOIN USERS u ON s.USER_ID = u.USER_ID
                 WHERE s.STUDENT_ID = %s
@@ -214,8 +243,9 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
         try:
             conn = get_db_connection()
             cursor = conn.cursor(dictionary=True)
+            # Fetch the slot details
             cursor.execute(
-                "SELECT ID, Date, Start_Time, Status FROM AVAILABILITY WHERE ID=%s",
+                "SELECT ID, Date, Start_Time, Status, THERAPIST_ID FROM AVAILABILITY WHERE ID=%s",
                 (slot_id,)
             )
             slot = cursor.fetchone()
@@ -228,37 +258,121 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 cursor.close(); conn.close()
                 print(f"END: Slot status: {slot['Status']}")
                 return jsonify({"message": "Selected slot is not available"}), 400
+
+            # Check if the student already has an appointment with this therapist on the same day
+            slot_date = slot['Date'].strftime('%Y-%m-%d') if isinstance(slot['Date'], datetime) else slot['Date']
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS count
+                FROM APPOINTMENTS a
+                JOIN AVAILABILITY av ON a.AVAILABILITY_ID = av.ID
+                WHERE a.STUDENT_ID = %s
+                  AND av.THERAPIST_ID = %s
+                  AND DATE(a.Appointment_time) = %s
+                  AND a.Status != 'cancelled'
+                """,
+                (student_id, slot['THERAPIST_ID'], slot_date)
+            )
+            existing_appointment = cursor.fetchone()
+            if existing_appointment['count'] > 0:
+                cursor.close(); conn.close()
+                print(f"END: Student already has an appointment with therapist_id={slot['THERAPIST_ID']} on {slot_date}")
+                return jsonify({"message": "You already have an appointment with this therapist on the same day."}), 400
+
             appt_time = f"{slot['Date']} {slot['Start_Time']}"
-            link = None
-            if appt_type == 'virtual':
-                link = f"https://therapy-clinic.com/meeting/{uuid.uuid4()}"
             cursor.execute(
                 """
                 INSERT INTO APPOINTMENTS(STUDENT_ID,AVAILABILITY_ID,Appointment_time,Status,Appointment_type,Meeting_link,Reason_for_meeting)
-                VALUES(%s,%s,%s,'confirmed',%s,%s,%s)
+                VALUES(%s,%s,%s,'pending',%s,%s,%s)
                 """,
-                (student_id, slot_id, appt_time, appt_type, link, reason)
+                (student_id, slot_id, appt_time, appt_type, None, reason)  # Meeting_link set to NULL initially
             )
             appointment_id = cursor.lastrowid
             cursor.execute("UPDATE AVAILABILITY SET Status='not_available' WHERE ID=%s", (slot_id,))
             conn.commit()
             try:
                 print(f"Calling notify_student_for_appt for appointment_id={appointment_id}")
-                notify_student_for_appt(cursor, mail, appointment_id, "booked")
-                notify_therapist_for_appt(cursor, mail, appointment_id, "booked")
-                print(f"END: Student email notification sent for appointment_id={appointment_id}, status=booked")
+                notify_student_for_appt(cursor, mail, appointment_id, "pending")  # Notify with pending status
+                notify_therapist_for_appt(cursor, mail, appointment_id, "pending")
+                print(f"END: Student email notification sent for appointment_id={appointment_id}, status=pending")
             except Exception as email_err:
                 print(f"END: Error sending student email notification for appointment_id={appointment_id}: {email_err}")
             cursor.close()
             conn.close()
             print(f"END: Appointment booked successfully for appointment_id={appointment_id}")
-            return jsonify({"message": "Appointment booked successfully", "appointmentId": appointment_id}), 200
+            return jsonify({"message": "Appointment booked successfully, pending therapist confirmation", "appointmentId": appointment_id}), 200
         except Exception as e:
             print(f"END: Error booking appointment for student_id={student_id}: {e}")
             conn.rollback()
             cursor.close()
             conn.close()
             return jsonify({"message": f"Server error booking appointment: {str(e)}"}), 500
+
+    @app.route('/therapist/appointments/confirm', methods=['POST'])
+    @jwt_required()
+    def therapist_confirm_appointment():
+        therapist_info = verify_therapist(get_jwt_identity())
+        if not therapist_info:
+            return jsonify({"message": "Access denied: Not a therapist"}), 403
+        therapist_id, _ = therapist_info
+        data = request.get_json() or {}
+        appt_id = data.get('appointmentId')
+        print(f"START: Therapist confirming appointment: therapist_id={therapist_id}, appt_id={appt_id}")
+        if not appt_id:
+            print("END: Missing appointmentId")
+            return jsonify({"message": "Appointment ID required"}), 400
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            # Verify the appointment belongs to this therapist
+            cursor.execute(
+                """
+                SELECT a.Appointment_ID, a.Appointment_type, a.Status, av.THERAPIST_ID
+                FROM APPOINTMENTS a
+                JOIN AVAILABILITY av ON a.AVAILABILITY_ID = av.ID
+                WHERE a.Appointment_ID=%s AND av.THERAPIST_ID=%s
+                """,
+                (appt_id, therapist_id)
+            )
+            appt = cursor.fetchone()
+            print(f"Appointment query result: {appt}")
+            if not appt:
+                cursor.close(); conn.close()
+                print("END: Appointment not found or does not belong to this therapist")
+                return jsonify({"message": "Appointment not found or does not belong to this therapist"}), 404
+            if appt['Status'] != 'pending':
+                cursor.close(); conn.close()
+                print(f"END: Appointment status is {appt['Status']}, cannot confirm")
+                return jsonify({"message": f"Appointment status is {appt['Status']}, cannot confirm"}), 400
+            # Generate meeting link if virtual
+            link = None
+            if appt['Appointment_type'] == 'virtual':
+                link = f"https://therapy-clinic.com/meeting/{uuid.uuid4()}"
+            # Update status to confirmed and set meeting link
+            cursor.execute(
+                """
+                UPDATE APPOINTMENTS SET Status='confirmed', Meeting_link=%s WHERE Appointment_ID=%s
+                """,
+                (link, appt_id)
+            )
+            conn.commit()
+            try:
+                print(f"Calling notify_student_for_appt for appointment_id={appt_id}")
+                notify_student_for_appt(cursor, mail, appt_id, "confirmed")
+                notify_therapist_for_appt(cursor, mail, appt_id, "confirmed")
+                print(f"END: Notifications sent for appointment_id={appt_id}, status=confirmed")
+            except Exception as email_err:
+                print(f"END: Error sending notifications for appointment_id={appt_id}: {email_err}")
+            cursor.close()
+            conn.close()
+            print(f"END: Appointment confirmed successfully for appointment_id={appt_id}")
+            return jsonify({"message": "Appointment confirmed successfully"}), 200
+        except Exception as e:
+            print(f"END: Error confirming appointment for therapist_id={therapist_id}: {e}")
+            conn.rollback()
+            cursor.close()
+            conn.close()
+            return jsonify({"message": f"Server error confirming appointment: {str(e)}"}), 500
 
     @app.route('/students/appointments/cancel', methods=['POST'])
     @jwt_required()
@@ -295,18 +409,14 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             cursor.execute("UPDATE AVAILABILITY SET Status='available' WHERE ID=%s", (avail,))
             conn.commit()
             try:
-                
                 notify_student_for_appt(cursor, mail, appt_id, "cancelled")
                 notify_therapist_for_appt(cursor, mail, appt_id, "cancelled")
-                
             except Exception as email_err:
                 print(f"END: Error sending student email notification for appointment_id={appt_id}: {email_err}")
             cursor.close()
             conn.close()
-            
             return jsonify({"message": "Appointment cancelled successfully"}), 200
         except Exception as e:
-            
             conn.rollback()
             cursor.close()
             conn.close()
@@ -330,7 +440,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             conn = get_db_connection()
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
-                "SELECT AVAILABILITY_ID, Appointment_type FROM APPOINTMENTS WHERE Appointment_ID=%s AND STUDENT_ID=%s",
+                "SELECT AVAILABILITY_ID, Appointment_type, Status FROM APPOINTMENTS WHERE Appointment_ID=%s AND STUDENT_ID=%s",
                 (appt_id, student_id)
             )
             orig = cursor.fetchone()
@@ -339,22 +449,47 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 cursor.close(); conn.close()
                 print("END: Appointment not found")
                 return jsonify({"message": "Appointment not found or does not belong to this student"}), 404
+            if orig['Status'] != 'confirmed':
+                cursor.close(); conn.close()
+                print(f"END: Appointment status is {orig['Status']}, cannot reschedule")
+                return jsonify({"message": f"Appointment status is {orig['Status']}, cannot reschedule"}), 400
             old_av = orig['AVAILABILITY_ID']
             appt_type = orig['Appointment_type']
-            cursor.execute("SELECT Status, Date, Start_Time FROM AVAILABILITY WHERE ID=%s", (new_slot,))
+            cursor.execute("SELECT Status, Date, Start_Time, THERAPIST_ID FROM AVAILABILITY WHERE ID=%s", (new_slot,))
             slot = cursor.fetchone()
             print(f"New slot query result: {slot}")
             if not slot or slot['Status'] != 'available':
                 cursor.close(); conn.close()
                 print("END: New slot not available")
                 return jsonify({"message": "New slot not available"}), 400
-            new_time = f"{slot['Date']} {slot['Start_Time']}"
-            link = None
-            if appt_type == 'virtual':
-                link = f"https://therapy-clinic.com/meeting/{uuid.uuid4()}"
+
+            # Check if the student already has an appointment with this therapist on the same day as the new slot
+            slot_date = slot['Date'].strftime('%Y-%m-%d') if isinstance(slot['Date'], datetime) else slot['Date']
             cursor.execute(
-                "UPDATE APPOINTMENTS SET AVAILABILITY_ID=%s, Appointment_time=%s, Meeting_link=%s, Status='confirmed' WHERE Appointment_ID=%s",
-                (new_slot, new_time, link, appt_id)
+                """
+                SELECT COUNT(*) AS count
+                FROM APPOINTMENTS a
+                JOIN AVAILABILITY av ON a.AVAILABILITY_ID = av.ID
+                WHERE a.STUDENT_ID = %s
+                  AND av.THERAPIST_ID = %s
+                  AND DATE(a.Appointment_time) = %s
+                  AND a.Status != 'cancelled'
+                  AND a.Appointment_ID != %s
+                """,
+                (student_id, slot['THERAPIST_ID'], slot_date, appt_id)
+            )
+            existing_appointment = cursor.fetchone()
+            if existing_appointment['count'] > 0:
+                cursor.close(); conn.close()
+                print(f"END: Student already has an appointment with therapist_id={slot['THERAPIST_ID']} on {slot_date}")
+                return jsonify({"message": "You already have an appointment with this therapist on the same day."}), 400
+
+            new_time = f"{slot['Date']} {slot['Start_Time']}"
+            cursor.execute(
+                """
+                UPDATE APPOINTMENTS SET AVAILABILITY_ID=%s, Appointment_time=%s, Status='pending' WHERE Appointment_ID=%s
+                """,
+                (new_slot, new_time, appt_id)
             )
             cursor.execute("UPDATE AVAILABILITY SET Status='available' WHERE ID=%s", (old_av,))
             cursor.execute("UPDATE AVAILABILITY SET Status='not_available' WHERE ID=%s", (new_slot,))
@@ -369,7 +504,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             cursor.close()
             conn.close()
             print(f"END: Appointment rescheduled successfully for appointment_id={appt_id}")
-            return jsonify({"message": "Appointment rescheduled successfully"}), 200
+            return jsonify({"message": "Appointment rescheduled successfully, pending therapist confirmation"}), 200
         except Exception as e:
             print(f"END: Error rescheduling appointment for student_id={student_id}: {e}")
             conn.rollback()

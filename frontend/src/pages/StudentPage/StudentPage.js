@@ -1,3 +1,4 @@
+// src/pages/StudentPage.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Calendar from "react-calendar";
@@ -130,6 +131,21 @@ const StudentPage = () => {
 
   const navigate = useNavigate();
 
+  // Handle profile update
+  const handleProfileUpdate = (updatedProfile) => {
+    setProfile(updatedProfile);
+  };
+
+  // Clear booking message after 5 seconds
+  useEffect(() => {
+    if (bookingMsg) {
+      const timer = setTimeout(() => {
+        setBookingMsg("");
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [bookingMsg]);
+
   // ───────── fetch available slots ─────────
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -182,7 +198,7 @@ const StudentPage = () => {
 
   // ───────── fetch appointments ─────────
   useEffect(() => {
-    if (selectedTab === "home" || selectedTab === "my-appointments") {
+    if (selectedTab === "home" || selectedTab === "my-appointments" || selectedTab === "book-appointment") {
       const token = localStorage.getItem("token");
       fetch("http://localhost:3000/students/appointments", {
         headers: { Authorization: `Bearer ${token}` },
@@ -216,13 +232,13 @@ const StudentPage = () => {
     if (!selectedSlot) {
       console.error("No slot selected for booking");
       setBookingError("Please select a time slot.");
-      return;
+      return null;
     }
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("No token found");
       setBookingError("You must be logged in to book an appointment.");
-      return;
+      return null;
     }
     const payload = {
       slotId: selectedSlot.id,
@@ -243,9 +259,9 @@ const StudentPage = () => {
       console.log("Booking response:", data);
       if (!res.ok) {
         setBookingError(data.message || "Booking failed.");
-        return;
+        return null;
       }
-      setBookingMsg("Appointment booked successfully!");
+      setBookingMsg(data.message || "Appointment booked successfully!");
       resetBooking();
       
       // Refresh appointments list
@@ -260,9 +276,11 @@ const StudentPage = () => {
             );
           }
         });
+      return data;
     } catch (err) {
       console.error("Booking error:", err.message);
       setBookingError("Booking failed due to an error.");
+      return null;
     }
   };
 
@@ -285,13 +303,10 @@ const StudentPage = () => {
       const data = await res.json();
       console.log("Cancel response:", data);
       if (!res.ok) {
-        alert(data.message || "Failed to cancel appointment.");
-        return;
+        return { success: false, message: data.message || "Failed to cancel appointment." };
       }
-      alert("Appointment cancelled successfully.");
-      
       // Refresh appointments list
-      fetch("http://localhost:3000/students/appointments", {
+      await fetch("http://localhost:3000/students/appointments", {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -302,9 +317,10 @@ const StudentPage = () => {
             );
           }
         });
+      return { success: true, message: "Appointment cancelled successfully." };
     } catch (err) {
       console.error("Cancel error:", err.message);
-      alert("Failed to cancel appointment due to an error.");
+      return { success: false, message: "Failed to cancel appointment due to an error." };
     }
   };
 
@@ -337,7 +353,7 @@ const StudentPage = () => {
         alert(data.message || "Reschedule failed.");
         return;
       }
-      alert("Appointment rescheduled successfully.");
+      setBookingMsg(data.message || "Appointment rescheduled successfully!");
       setShowRescheduleModal(false);
       setNewSlotId(null);
       setAppointmentToReschedule(null);
@@ -476,12 +492,14 @@ const StudentPage = () => {
             bookingMsg={bookingMsg}
             categorizeSlots={categorizeSlots}
             formatTime={formatTime}
+            appointments={appointments} // Pass appointments to check for existing bookings
           />
         );
       case "profile":
         return (
-          <StudentProfileTab 
+          <StudentProfileTab
             profile={profile}
+            onProfileUpdate={handleProfileUpdate}
           />
         );
       default:

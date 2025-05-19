@@ -37,34 +37,40 @@ export default function HomeTab({
         day: "numeric",
       })
     : "None";
-  
+
   const normalizeDate = (dateString) => {
-    const date = new Date(dateString);
-     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const [year, month, day] = dateString.split("-").map(Number);
+    return new Date(year, month - 1, day); // month is 0-based
   };
+
+  // Log availableSlots to debug
+  console.log("Available Slots:", availableSlots);
 
   // Available therapists for the calendar grid (limited to 4 for display)
   const availableTherapists = availableSlots
     .map((group) => {
       const today = new Date(now).setHours(0, 0, 0, 0);
-      return{
-      name: group.therapist_name,
-      id: group.therapist_id,
-      slots: group.appointments
-        .filter(
-          (slot) => {
+      return {
+        name: group.therapist_name,
+        id: group.therapist_id,
+        slots: group.appointments
+          .filter((slot) => {
             const slotDate = normalizeDate(slot.date).getTime();
-            return slotDate >= today;
+            const slotDateTime = new Date(`${slot.date}T${slot.start_time}`);
+            return slotDate >= today && slotDateTime >= now;
           })
-        .sort(
-          (a, b) =>
-            new Date(`${a.date}T${a.start_time}`) -
-            new Date(`${b.date}T${b.start_time}`)
-        ),
+          .sort(
+            (a, b) =>
+              new Date(`${a.date}T${a.start_time}`) -
+              new Date(`${b.date}T${b.start_time}`)
+          ),
       };
     })
     .filter((t) => t.slots.length > 0)
     .slice(0, 4);
+
+  // Log availableTherapists to debug
+  console.log("Available Therapists:", availableTherapists);
 
   // State to track which therapist's slots are being viewed
   const [selectedTherapistId, setSelectedTherapistId] = useState(null);
@@ -75,7 +81,7 @@ export default function HomeTab({
     date.setDate(now.getDate() + i);
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
   });
-  
+
   // Map slots to days for the calendar, filtering by selected therapist
   const therapistColors = ["#52b788", "#2d6a4f", "#95d5b2", "#40916c"];
   const calendarSlots = days.map((day) => {
@@ -83,7 +89,7 @@ export default function HomeTab({
       .filter((therapist) => !selectedTherapistId || therapist.id === selectedTherapistId)
       .map((therapist, index) => {
         const slots = therapist.slots.filter((slot) => {
-          const slotDate = new Date(slot.date);
+          const slotDate = normalizeDate(slot.date);
           return slotDate.toDateString() === day.toDateString();
         });
         return {
@@ -105,6 +111,9 @@ export default function HomeTab({
       });
     return { day, slots: slotsOnDay };
   });
+
+  // Log calendarSlots to debug
+  console.log("Calendar Slots:", calendarSlots);
 
   // Handler to toggle selected therapist
   const handleTherapistClick = (therapistId) => {
@@ -191,10 +200,10 @@ export default function HomeTab({
                     </p>
                     <p>
                       <strong>Time:</strong>{" "}
-                      {new Date(app.appointment_time).toLocaleTimeString(
-                        [],
-                        { hour: "2-digit", minute: "2-digit" }
-                      )}
+                      {new Date(app.appointment_time).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </p>
                     <p>
                       <strong>Therapist:</strong> {app.therapist_name}

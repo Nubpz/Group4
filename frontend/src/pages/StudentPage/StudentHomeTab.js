@@ -19,15 +19,16 @@ export default function StudentHomeTab({
   );
 
   // Count appointments today and this week
-  const today = new Date().setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const appointmentsToday = upcoming.filter(
     (app) =>
-      new Date(app.appointment_time).setHours(0, 0, 0, 0) === today
+      new Date(app.appointment_time).setHours(0, 0, 0, 0) === today.getTime()
   ).length;
   const appointmentsThisWeek = upcoming.filter(
     (app) =>
       new Date(app.appointment_time) <=
-      new Date(today + 7 * 24 * 60 * 60 * 1000)
+      new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
   ).length;
 
   // Next appointment
@@ -40,6 +41,9 @@ export default function StudentHomeTab({
         day: "numeric",
       })
     : "None";
+
+  // Log availableSlots to debug
+  console.log("Available Slots:", availableSlots);
 
   // Available therapists with all their slots
   const availableTherapists = availableSlots
@@ -59,6 +63,9 @@ export default function StudentHomeTab({
     }))
     .filter((t) => t.slots.length > 0);
 
+  // Log availableTherapists to debug
+  console.log("Available Therapists:", availableTherapists);
+
   // State to track which therapist's slots are being viewed
   const [selectedTherapistId, setSelectedTherapistId] = useState(null);
 
@@ -76,7 +83,9 @@ export default function StudentHomeTab({
       .filter((therapist) => !selectedTherapistId || therapist.id === selectedTherapistId)
       .map((therapist, index) => {
         const slots = therapist.slots.filter((slot) => {
-          const slotDate = new Date(slot.date);
+          // Parse slot.date in local time explicitly
+          const [year, month, dayOfMonth] = slot.date.split("-").map(Number);
+          const slotDate = new Date(year, month - 1, dayOfMonth); // month is 0-based
           return slotDate.toDateString() === day.toDateString();
         });
         return {
@@ -98,6 +107,9 @@ export default function StudentHomeTab({
       });
     return { day, slots: slotsOnDay };
   });
+
+  // Log calendarSlots to debug
+  console.log("Calendar Slots:", calendarSlots);
 
   // Handler for viewing appointment details
   const handleViewDetails = (appointment) => {

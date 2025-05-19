@@ -22,32 +22,79 @@ export default function BookingTab({
   bookingMsg,
   categorizeSlots,
   formatTime,
+  appointments,
 }) {
-  // build date list & filtered slots
+  // Build date list & filtered slots with time consideration
   let availableDates = [];
   if (selectedTherapist) {
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0]; // "2025-05-19"
+
     availableDates = Array.from(
       new Set(
-        selectedTherapist.appointments.map((s) => s.date)
+        selectedTherapist.appointments
+          .filter((slot) => {
+            const slotDateStr = slot.date; // e.g., "2025-05-19"
+            const [year, month, day] = slotDateStr.split("-").map(Number);
+            const [h, m, s] = slot.start_time.split(":").map(Number);
+            const slotDateTime = new Date(year, month - 1, day, h, m, s || 0);
+
+            // For today, only include if the slot starts after now
+            if (slotDateStr === todayStr) {
+              return slotDateTime > now;
+            }
+            // For future dates, include if the date is >= today
+            return slotDateStr >= todayStr;
+          })
+          .map((s) => s.date)
       )
-    ).filter((d) => d >= new Date().toISOString().split("T")[0]);
+    );
   }
+
+  // Apply booking restriction: exclude dates with existing appointments for the selected child and therapist
+  if (selectedTherapist && selectedChildId) {
+    const therapistAppointments = appointments.filter(
+      (appt) => appt.therapist_id === selectedTherapist.therapist_id && appt.child_id === selectedChildId
+    );
+    const bookedDates = therapistAppointments.map((appt) =>
+      new Date(appt.appointment_time).toISOString().split("T")[0]
+    );
+    availableDates = availableDates.filter((date) => !bookedDates.includes(date));
+  }
+
   let filteredSlots = [];
   if (selectedTherapist && bookingDate) {
     const d = bookingDate.toISOString().split("T")[0];
-    filteredSlots = selectedTherapist.appointments.filter(
-      (s) => s.date === d
-    );
+    filteredSlots = selectedTherapist.appointments.filter((s) => s.date === d);
   }
-  const categorized = filteredSlots.length
-    ? categorizeSlots(filteredSlots)
-    : null;
+  const categorized = filteredSlots.length ? categorizeSlots(filteredSlots) : null;
 
   return (
     <div className="appointment-booking">
+      <style>{`
+        .confirmation-section {
+          background-color: #e8f5e9;
+          border: 1px solid #4CAF50;
+          border-radius: 8px;
+          padding: 15px;
+          margin: 10px 0;
+          text-align: center;
+          font-size: 1.1em;
+          color: #4CAF50;
+          font-weight: bold;
+        }
+      `}</style>
+
       <h2>Book an Appointment</h2>
 
-      {/* select child */}
+      {/* Confirmation Message */}
+      {bookingMsg && (
+        <div className="confirmation-section">
+          Appointment info has been sent to the therapist, waiting for confirmation.
+        </div>
+      )}
+
+      {/* Select Child */}
       <div className="booking-section">
         <label>Select Child:</label>
         <div className="children-cards">
@@ -78,7 +125,7 @@ export default function BookingTab({
       </div>
 
       <div className="booking-3columns">
-        {/* therapist list */}
+        {/* Therapist List */}
         <div className="booking-therapist">
           <label>Therapist</label>
           {availableSlots.length === 0 ? (
@@ -105,13 +152,9 @@ export default function BookingTab({
                       setSelectedSlot(null);
                     }}
                   >
-                    <div className="therapist-initials">
-                      {initials}
-                    </div>
+                    <div className="therapist-initials">{initials}</div>
                     <div className="therapist-details">
-                      <span className="therapist-name">
-                        {g.therapist_name}
-                      </span>
+                      <span className="therapist-name">{g.therapist_name}</span>
                       <span className="therapist-description">
                         Certified Therapist
                       </span>
@@ -123,20 +166,20 @@ export default function BookingTab({
           )}
         </div>
 
-        {/* calendar */}
+        {/* Calendar */}
         <div className="booking-calendar">
           <label>Select Date:</label>
           {selectedTherapist ? (
             <Calendar
-              onChange={setBookingDate}
+              onChange={(date) => {
+                setBookingDate(date);
+                setSelectedSlot(null);
+              }}
               value={bookingDate}
               tileDisabled={({ date, view }) => {
                 if (view !== "month") return false;
                 const d = date.toISOString().split("T")[0];
-                return (
-                  d < new Date().toISOString().split("T")[0] ||
-                  !availableDates.includes(d)
-                );
+                return !availableDates.includes(d);
               }}
             />
           ) : (
@@ -149,60 +192,51 @@ export default function BookingTab({
           )}
         </div>
 
-        {/* timeslots */}
+        {/* Timeslots */}
         <div className="booking-timeslots">
           <label>Available Times:</label>
           {selectedTherapist && bookingDate ? (
             categorized ? (
-              Object.entries(categorized).map(
-                ([cat, arr]) =>
-                  arr.length > 0 && (
-                    <div key={cat} className="timeslot-category">
-                      <h4>{cat}</h4>
-                      <div className="timeslot-list">
-                        {arr.map((slot) => {
-                          const [h, m, s] = slot.start_time
-                            .split(":")
-                            .map(Number);
-                          const dt = new Date(
-                            bookingDate.getFullYear(),
-                            bookingDate.getMonth(),
-                            bookingDate.getDate(),
-                            h,
-                            m,
-                            s || 0
-                          );
-                          const isPast = dt < new Date();
-                          return (
-                            <button
-                              key={slot.id}
-                              className={`time-slot-btn ${
-                                selectedSlot &&
-                                selectedSlot.id === slot.id
-                                  ? "selected"
-                                  : ""
-                              }`}
-                              onClick={() =>
-                                !isPast && setSelectedSlot(slot)
-                              }
-                              disabled={isPast}
-                              style={
-                                isPast
-                                  ? {
-                                      backgroundColor: "#ccc",
-                                      cursor: "not-allowed",
-                                    }
-                                  : {}
-                              }
-                            >
-                              {formatTime(slot.start_time)} -{" "}
-                              {formatTime(slot.end_time)}
-                            </button>
-                          );
-                        })}
-                      </div>
+              Object.entries(categorized).map(([cat, arr]) =>
+                arr.length > 0 && (
+                  <div key={cat} className="timeslot-category">
+                    <h4>{cat}</h4>
+                    <div className="timeslot-list">
+                      {arr.map((slot) => {
+                        const [h, m, s] = slot.start_time.split(":").map(Number);
+                        const dt = new Date(
+                          bookingDate.getFullYear(),
+                          bookingDate.getMonth(),
+                          bookingDate.getDate(),
+                          h,
+                          m,
+                          s || 0
+                        );
+                        const isPast = dt < new Date();
+                        return (
+                          <button
+                            key={slot.id}
+                            className={`time-slot-btn ${
+                              selectedSlot && selectedSlot.id === slot.id ? "selected" : ""
+                            }`}
+                            onClick={() => !isPast && setSelectedSlot(slot)}
+                            disabled={isPast}
+                            style={
+                              isPast
+                                ? {
+                                    backgroundColor: "#ccc",
+                                    cursor: "not-allowed",
+                                  }
+                                : {}
+                            }
+                          >
+                            {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+                          </button>
+                        );
+                      })}
                     </div>
-                  )
+                  </div>
+                )
               )
             ) : (
               <p>No available slots on this date.</p>
@@ -213,7 +247,7 @@ export default function BookingTab({
         </div>
       </div>
 
-      {/* type & reason */}
+      {/* Type & Reason */}
       <div className="booking-section appointment-options">
         <label>Appointment Type:</label>
         <div className="appointment-type">
@@ -247,12 +281,15 @@ export default function BookingTab({
         />
       </div>
 
-      {/* final book */}
+      {/* Final Book */}
       {selectedSlot && (
         <div className="booking-section">
           <button
             className="final-book-btn"
-            onClick={handleFinalBooking}
+            onClick={async () => {
+              const response = await handleFinalBooking();
+              console.log("Booking response:", response);
+            }}
           >
             Book Appointment
           </button>
@@ -260,12 +297,7 @@ export default function BookingTab({
       )}
 
       <div className="booking-section">
-        {bookingError && (
-          <p className="error-message">{bookingError}</p>
-        )}
-        {bookingMsg && (
-          <p className="confirmation-msg">{bookingMsg}</p>
-        )}
+        {bookingError && <p className="error-message">{bookingError}</p>}
         <button className="cancel-btn" onClick={resetBooking}>
           Cancel Booking
         </button>

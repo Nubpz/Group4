@@ -452,7 +452,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                     "appointment_type": row["Appointment_type"],
                     "meeting_link": row["Meeting_link"],
                     "therapist_name": f"{row['therapist_first_name']} {row['therapist_last_name']}",
-                    "therapist_id":     row["therapist_id"]
+                    "therapist_id": row["therapist_id"]
                 }
                 if appt_time and appt_time >= now:
                     upcoming.append(appointment)
@@ -479,6 +479,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
         if not slot_id or not child_id:
             return jsonify({"message": "Missing slotId or childId"}), 400
         appointment_type = data.get("appointment_type", "virtual")
+        reason_for_meeting = data.get("reasonForMeeting", "")
         try:
             conn = get_db_connection()
             cursor = conn.cursor(dictionary=True)
@@ -494,13 +495,32 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 return jsonify({"message": "Child does not belong to this parent."}), 403
             # Check if the appointment slot is available.
             cursor.execute("""
-                SELECT *
+                SELECT ID, Date, Start_Time, THERAPIST_ID
                 FROM AVAILABILITY
                 WHERE ID = %s AND Status = 'available'
             """, (slot_id,))
             slot_row = cursor.fetchone()
             if not slot_row:
                 return jsonify({"message": "Slot not found or already booked."}), 404
+
+            # Check if the child already has an appointment with this therapist on the same day
+            slot_date = slot_row["Date"].strftime('%Y-%m-%d') if isinstance(slot_row["Date"], datetime) else slot_row["Date"]
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS count
+                FROM APPOINTMENTS a
+                JOIN AVAILABILITY av ON a.AVAILABILITY_ID = av.ID
+                WHERE a.STUDENT_ID = %s
+                  AND av.THERAPIST_ID = %s
+                  AND DATE(a.Appointment_time) = %s
+                  AND a.Status != 'cancelled'
+                """,
+                (child_id, slot_row["THERAPIST_ID"], slot_date)
+            )
+            existing_appointment = cursor.fetchone()
+            if existing_appointment['count'] > 0:
+                return jsonify({"message": "This child already has an appointment with this therapist on the same day."}), 400
+
             start_value = slot_row["Start_Time"]
             if isinstance(start_value, timedelta):
                 start_time = (datetime.min + start_value).time()
@@ -518,7 +538,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 appt_datetime,
                 "pending",
                 appointment_type,
-                data.get("reasonForMeeting", ""),
+                reason_for_meeting,
                 user_id
             ))
             new_appointment_id = cursor.lastrowid
@@ -530,7 +550,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             notify_therapist_for_appt(cursor, mail, new_appointment_id, "booked")
 
             return jsonify({
-                "message": "Appointment booked successfully.",
+                "message": "Appointment booked successfully, pending therapist confirmation",
                 "appointmentId": new_appointment_id
             }), 201
         except mysql.connector.Error as err:
@@ -603,7 +623,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             cursor = conn.cursor(dictionary=True)
             # Verify appointment ownership.
             cursor.execute("""
-                SELECT a.Appointment_ID as id, a.AVAILABILITY_ID, a.Appointment_time
+                SELECT a.Appointment_ID as id, a.AVAILABILITY_ID, a.Appointment_time, a.STUDENT_ID
                 FROM APPOINTMENTS a
                 JOIN STUDENT s ON a.STUDENT_ID = s.STUDENT_ID
                 JOIN GUARDIAN g ON s.STUDENT_ID = g.STUDENT_ID
@@ -615,13 +635,33 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
                 return jsonify({"message": "Appointment not found or permission denied."}), 403
             # Check that the new slot is available.
             cursor.execute("""
-                SELECT *
+                SELECT ID, Date, Start_Time, THERAPIST_ID
                 FROM AVAILABILITY
                 WHERE ID = %s AND Status = 'available'
             """, (new_slot_id,))
             new_slot = cursor.fetchone()
             if not new_slot:
                 return jsonify({"message": "New slot not available."}), 404
+
+            # Check if the child already has an appointment with this therapist on the same day
+            slot_date = new_slot["Date"].strftime('%Y-%m-%d') if isinstance(new_slot["Date"], datetime) else new_slot["Date"]
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS count
+                FROM APPOINTMENTS a
+                JOIN AVAILABILITY av ON a.AVAILABILITY_ID = av.ID
+                WHERE a.STUDENT_ID = %s
+                  AND av.THERAPIST_ID = %s
+                  AND DATE(a.Appointment_time) = %s
+                  AND a.Status != 'cancelled'
+                  AND a.Appointment_ID != %s
+                """,
+                (appointment["STUDENT_ID"], new_slot["THERAPIST_ID"], slot_date, appointment_id)
+            )
+            existing_appointment = cursor.fetchone()
+            if existing_appointment['count'] > 0:
+                return jsonify({"message": "This child already has an appointment with this therapist on the same day."}), 400
+
             start_value = new_slot["Start_Time"]
             if isinstance(start_value, timedelta):
                 new_start_time = (datetime.min + start_value).time()
@@ -631,7 +671,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             # Update the appointment with the new slot and appointment time.
             cursor.execute("""
                 UPDATE APPOINTMENTS
-                SET AVAILABILITY_ID = %s, Appointment_time = %s
+                SET AVAILABILITY_ID = %s, Appointment_time = %s, Status = 'pending'
                 WHERE Appointment_ID = %s
             """, (new_slot_id, new_appt_datetime, appointment_id))
             # Set the old slot status to 'available'.
@@ -644,7 +684,7 @@ def register_routes(app, get_db_connection, jwt_required, get_jwt_identity, mail
             notify_therapist_for_appt(cursor, mail, appointment_id, "rescheduled")
             
             conn.commit()
-            return jsonify({"message": "Appointment rescheduled successfully."}), 200
+            return jsonify({"message": "Appointment rescheduled successfully, pending therapist confirmation"}), 200
         except mysql.connector.Error as err:
             conn.rollback()
             print("Database error in reschedule_appointment:", err)

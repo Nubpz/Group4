@@ -1,3 +1,4 @@
+// src/pages/StudentProfileTab.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -9,67 +10,74 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
     dateOfBirth: profile?.DOB || "",
     phoneNumber: profile?.phone_number || "",
     email: profile?.username || "",
-    gender: profile?.gender || ""
+    gender: profile?.gender || "",
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
+  const [locationError, setLocationError] = useState("");
+  const [locationSuccess, setLocationSuccess] = useState("");
 
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     setUpdatedProfile({
       ...updatedProfile,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handlePasswordChange = (e) => {
     setPasswordData({
       ...passwordData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    
+
     try {
       const token = localStorage.getItem("token");
       const response = await fetch("http://localhost:3000/students/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           firstName: updatedProfile.firstName,
           lastName: updatedProfile.lastName,
           dateOfBirth: updatedProfile.dateOfBirth,
           phoneNumber: updatedProfile.phoneNumber,
-          gender: updatedProfile.gender
-        })
+          gender: updatedProfile.gender,
+        }),
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
         setMessage({ text: "Profile updated successfully!", type: "success" });
         setIsEditing(false);
-        onProfileUpdate({
+        const newProfile = {
           ...profile,
           first_name: updatedProfile.firstName,
           last_name: updatedProfile.lastName,
           DOB: updatedProfile.dateOfBirth,
           phone_number: updatedProfile.phoneNumber,
           gender: updatedProfile.gender,
-          isProfileComplete: true
-        });
+          isProfileComplete: true,
+        };
+        if (typeof onProfileUpdate === "function") {
+          onProfileUpdate(newProfile);
+        } else {
+          console.warn("onProfileUpdate is not a function");
+        }
       } else {
         setMessage({ text: data.message || "Failed to update profile", type: "error" });
       }
@@ -80,34 +88,34 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
 
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setMessage({ text: "New passwords do not match", type: "error" });
       return;
     }
-    
+
     try {
       const token = localStorage.getItem("token");
       const response = await fetch("http://localhost:3000/students/password", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        })
+          newPassword: passwordData.newPassword,
+        }),
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
         setMessage({ text: "Password updated successfully!", type: "success" });
         setPasswordData({
           currentPassword: "",
           newPassword: "",
-          confirmPassword: ""
+          confirmPassword: "",
         });
         setShowPasswordModal(false);
       } else {
@@ -116,6 +124,61 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
     } catch (error) {
       setMessage({ text: "An error occurred while updating your password", type: "error" });
     }
+  };
+
+  const handleSetLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLocationError("No token found. Please log in again.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log("Geolocation coordinates:", { latitude, longitude });
+        try {
+          const res = await fetch("http://localhost:3000/user/location", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ latitude, longitude }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.message || "Failed to update location");
+          }
+          setLocationSuccess("Location updated successfully!");
+          setLocationError("");
+          const newProfile = {
+            ...profile,
+            latitude,
+            longitude,
+          };
+          if (typeof onProfileUpdate === "function") {
+            onProfileUpdate(newProfile);
+          } else {
+            console.warn("onProfileUpdate is not a function");
+          }
+          setTimeout(() => setLocationSuccess(""), 3000);
+        } catch (err) {
+          console.error("Error updating location:", err);
+          setLocationError(err.message);
+          setLocationSuccess("");
+        }
+      },
+      (err) => {
+        setLocationError(`Geolocation error: ${err.message}`);
+        setLocationSuccess("");
+      }
+    );
   };
 
   const handleLogout = () => {
@@ -134,19 +197,21 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
   return (
     <div className="profile-tab">
       <h2>My Profile</h2>
-      
+
       {!profile.isProfileComplete && (
         <div className="mandatory-message">
           Please complete your profile information to access other features.
         </div>
       )}
-      
+
       {message.text && (
         <div className={`message ${message.type}`}>
           {message.text}
         </div>
       )}
-      
+      {locationError && <p className="error">{locationError}</p>}
+      {locationSuccess && <p className="message">{locationSuccess}</p>}
+
       <div className="profile-container">
         <div className="profile-header">
           <div className="profile-avatar">
@@ -185,7 +250,7 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
                     />
                   </div>
                 </div>
-                
+
                 <div className="form-row">
                   <div className="form-group">
                     <label>Date of Birth</label>
@@ -207,7 +272,7 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
                     />
                   </div>
                 </div>
-                
+
                 <div className="form-row">
                   <div className="form-group">
                     <label>Gender</label>
@@ -231,12 +296,12 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
                     />
                   </div>
                 </div>
-                
+
                 <div className="form-actions">
                   <button type="submit" className="save-btn">Save Changes</button>
                   {profile.isProfileComplete && (
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="cancel-btn"
                       onClick={() => setIsEditing(false)}
                     >
@@ -269,7 +334,15 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
                     {profile.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : "Not specified"}
                   </span>
                 </div>
-                <button 
+                <div className="profile-info-item">
+                  <span className="info-label">Location</span>
+                  <span className="info-value">
+                    {profile.latitude && profile.longitude
+                      ? `${profile.latitude}, ${profile.longitude}`
+                      : "Not set"}
+                  </span>
+                </div>
+                <button
                   className="edit-profile-btn"
                   onClick={() => setIsEditing(true)}
                 >
@@ -291,6 +364,26 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
                 Change Password
               </button>
               <button
+                className="set-location-btn"
+                onClick={handleSetLocation}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                Set my Location
+              </button>
+              <button
                 className="logout-btn"
                 onClick={handleLogout}
               >
@@ -304,7 +397,7 @@ export default function StudentProfileTab({ profile, onProfileUpdate }) {
           <div className="profile-section">
             <h4>Parent/Guardian Information</h4>
             <p className="info-text">
-              Your parents/guardians can view and manage your appointments. 
+              Your parents/guardians can view and manage your appointments.
               To update this information, please contact the clinic administrator.
             </p>
           </div>

@@ -14,6 +14,9 @@ const PresetBlocksAvailability = () => {
   const [viewModal, setViewModal] = useState(null);
   const [editModal, setEditModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [slotMode, setSlotMode] = useState("default"); // default or custom
+  const [customStartTime, setCustomStartTime] = useState("10:00");
+  const [customDuration, setCustomDuration] = useState(20);
 
   useEffect(() => {
     if (!confirmationMsg) return;
@@ -37,7 +40,7 @@ const PresetBlocksAvailability = () => {
       });
       if (!response.ok) throw new Error("Failed to fetch availability data.");
       const data = await response.json();
-      console.log("Availability fetched:", data);
+      console.log("Raw availability data:", data); // Debugging log
       setAvailability(data);
     } catch (err) {
       setError(err.message);
@@ -62,7 +65,10 @@ const PresetBlocksAvailability = () => {
     }
   };
 
-  const onDateClick = (date) => setSelectedDate(date);
+  const onDateClick = (date) => {
+    setSelectedDate(date);
+    setSlotMode("default"); // Reset to default when changing date
+  };
 
   const generateTimeBlocks = (startHour, endHour) => {
     const blocks = [];
@@ -76,16 +82,17 @@ const PresetBlocksAvailability = () => {
     return blocks;
   };
 
-  const morningBlocks = generateTimeBlocks(9, 12);
+  // Updated time blocks starting from 10 AM
+  const morningBlocks = generateTimeBlocks(10, 12);
   const afternoonBlocks = generateTimeBlocks(13, 16);
   const eveningBlocks = generateTimeBlocks(17, 19);
   const presetTimes = [...morningBlocks, ...afternoonBlocks, ...eveningBlocks];
 
-  const add20Min = (timeStr) => {
+  const addMinutes = (timeStr, minutes) => {
     const [hh, mm] = timeStr.split(":").map(Number);
     let newH = hh;
-    let newM = mm + 20;
-    if (newM >= 60) {
+    let newM = mm + minutes;
+    while (newM >= 60) {
       newH += 1;
       newM -= 60;
     }
@@ -107,23 +114,23 @@ const PresetBlocksAvailability = () => {
 
   const isPastTime = (dateStr, timeStr) => {
     const now = new Date();
-    const todayStr = now.toISOString().split("T")[0];
-    if (dateStr !== todayStr) return false;
-    const [blockHH, blockMM] = timeStr.split(":").map(Number);
-    const blockDateTime = new Date(selectedDate);
-    blockDateTime.setHours(blockHH, blockMM, 0, 0);
-    return blockDateTime < now;
+    const selectedDateTime = new Date(`${dateStr}T${timeStr}:00`);
+    return selectedDateTime < now;
   };
 
-  const isOverlappedByExtra = (dateStr, startTime, endTime) => {
+  const hasCustomSlots = (dateStr) => {
     const extraSlots = getExtraSlots(dateStr);
-    if (!extraSlots.length) return false;
-    const presetStart = new Date(`${dateStr}T${startTime}:00`);
-    const presetEnd = new Date(`${dateStr}T${endTime}:00`);
-    return extraSlots.some((slot) => {
-      const slotStart = new Date(`${dateStr}T${slot.Start_Time}`);
-      const slotEnd = new Date(`${dateStr}T${slot.End_Time}`);
-      return presetStart < slotEnd && presetEnd > slotStart;
+    return extraSlots.length > 0;
+  };
+
+  const isOverlapping = (dateStr, startTime, endTime) => {
+    const newStart = new Date(`${dateStr}T${startTime}:00`);
+    const newEnd = new Date(`${dateStr}T${endTime}:00`);
+    return availability.some((slot) => {
+      if (slot.Date !== dateStr) return false;
+      const existingStart = new Date(`${slot.Date}T${slot.Start_Time}`);
+      const existingEnd = new Date(`${slot.Date}T${slot.End_Time}`);
+      return newStart < existingEnd && newEnd > existingStart;
     });
   };
 
@@ -134,22 +141,19 @@ const PresetBlocksAvailability = () => {
     }
     setError("");
     const dateStr = selectedDate.toISOString().split("T")[0];
-    const now = new Date();
-    const todayStr = now.toISOString().split("T")[0];
-    if (dateStr === todayStr && isPastTime(dateStr, blockTime)) {
+    if (isPastTime(dateStr, blockTime)) {
       setError("You cannot modify availability for past times.");
       return;
     }
 
     const startTime = blockTime;
-    const endTime = add20Min(blockTime);
-    const slotExists = isSlotTaken(dateStr, startTime);
-
-    // Check if this preset slot overlaps with an existing Quick Slot
-    if (isOverlappedByExtra(dateStr, startTime, endTime)) {
-      setError("This preset slot overlaps with an existing Quick Slot.");
+    const endTime = addMinutes(blockTime, 20);
+    if (isOverlapping(dateStr, startTime, endTime)) {
+      setError("This slot overlaps with an existing availability. Please choose a different time.");
       return;
     }
+
+    const slotExists = isSlotTaken(dateStr, startTime);
 
     if (slotExists) {
       const slotToUpdate = availability.find(
@@ -236,23 +240,111 @@ const PresetBlocksAvailability = () => {
     }
   };
 
+  const handleCustomSlotSubmit = async () => {
+    if (!selectedDate) {
+      setError("Please select a date on the calendar first.");
+      return;
+    }
+    setError("");
+    const dateStr = selectedDate.toISOString().split("T")[0];
+    if (isPastTime(dateStr, customStartTime)) {
+      setError("You cannot set availability for past times.");
+      return;
+    }
+
+    const endTime = addMinutes(customStartTime, parseInt(customDuration));
+    if (isOverlapping(dateStr, customStartTime, endTime)) {
+      setError("This slot overlaps with an existing availability. Please choose a different time.");
+      return;
+    }
+
+    const tempId = Date.now();
+    const newSlot = {
+      ID: tempId,
+      Date: dateStr,
+      Start_Time: customStartTime + ":00",
+      End_Time: endTime + ":00",
+      Status: "available",
+    };
+    setAvailability((prev) => [...prev, newSlot]);
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:3000/therapist/availability", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          date: dateStr,
+          startTime: customStartTime,
+          endTime: endTime,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setAvailability((prev) => prev.filter((slot) => slot.ID !== tempId));
+        throw new Error(data.error || "Failed to create custom availability.");
+      }
+      if (data.availabilityId) {
+        setAvailability((prev) =>
+          prev.map((slot) =>
+            slot.ID === tempId ? { ...slot, ID: data.availabilityId } : slot
+          )
+        );
+      }
+      setConfirmationMsg(`Custom availability added for ${dateStr} from ${customStartTime} to ${endTime}`);
+      fetchAvailability();
+    } catch (err) {
+      setAvailability((prev) => prev.filter((slot) => slot.ID !== tempId));
+      setError(err.message);
+    }
+  };
+
   const categorizeAvailability = () => {
     const categorized = { today: [], tomorrow: [], thisWeek: [] };
     const now = new Date();
-    const todayStr = now.toISOString().split("T")[0];
+    const todayStr = now.toLocaleDateString("en-CA"); // "2025-05-18" in local time (EDT)
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+    const tomorrowStr = tomorrow.toLocaleDateString("en-CA"); // "2025-05-19"
     const weekLater = new Date(now);
     weekLater.setDate(weekLater.getDate() + 7);
+    const weekLaterStr = weekLater.toLocaleDateString("en-CA");
+
+    console.log("TodayStr:", todayStr);
+    console.log("TomorrowStr:", tomorrowStr);
+    console.log("WeekLaterStr:", weekLaterStr);
+    console.log("Current time (EDT):", now.toString());
 
     availability.forEach((slot) => {
       const slotDate = new Date(slot.Date);
       const slotStr = slot.Date;
-      if (slotStr === todayStr) categorized.today.push(slot);
-      else if (slotStr === tomorrowStr) categorized.tomorrow.push(slot);
-      else if (slotDate <= weekLater) categorized.thisWeek.push(slot);
+      const slotStartTime = new Date(`${slot.Date}T${slot.Start_Time}`);
+
+      console.log(`Processing slot - Date: ${slotStr}, Start: ${slot.Start_Time}`);
+
+      if (slotStr === todayStr) {
+        // For "today", only include slots that haven't passed
+        if (slotStartTime > now) {
+          console.log(`Slot added to today: ${slotStr} ${slot.Start_Time}`);
+          categorized.today.push(slot);
+        } else {
+          console.log(`Slot skipped for today (past time): ${slotStr} ${slot.Start_Time}`);
+        }
+      } else if (slotStr === tomorrowStr) {
+        console.log(`Slot added to tomorrow: ${slotStr} ${slot.Start_Time}`);
+        categorized.tomorrow.push(slot);
+      } else if (slotDate > new Date(tomorrowStr) && slotDate <= new Date(weekLaterStr)) {
+        console.log(`Slot added to thisWeek: ${slotStr} ${slot.Start_Time}`);
+        categorized.thisWeek.push(slot);
+      } else {
+        console.log(`Slot not categorized: ${slotStr} ${slot.Start_Time}`);
+      }
     });
+
+    console.log("Categorized slots:", categorized);
     return categorized;
   };
 
@@ -344,7 +436,7 @@ const PresetBlocksAvailability = () => {
 
   const ShiftBlock = ({ title, blocks }) => {
     const dateStr = selectedDate ? selectedDate.toISOString().split("T")[0] : null;
-    const extraSlots = dateStr ? getExtraSlots(dateStr) : [];
+    const isDisabled = dateStr && hasCustomSlots(dateStr);
 
     return (
       <div className="shift-card">
@@ -353,20 +445,17 @@ const PresetBlocksAvailability = () => {
           {blocks.map((time) => {
             const taken = dateStr && isSlotTaken(dateStr, time);
             const past = dateStr && isPastTime(dateStr, time);
-            const overlapped = dateStr && extraSlots.some((slot) => {
-              const presetStart = new Date(`${dateStr}T${time}:00`);
-              const presetEnd = new Date(`${dateStr}T${add20Min(time)}:00`);
-              const slotStart = new Date(`${dateStr}T${slot.Start_Time}`);
-              const slotEnd = new Date(`${dateStr}T${slot.End_Time}`);
-              return presetStart < slotEnd && presetEnd > slotStart;
-            });
-            const disabled = !dateStr || past || overlapped;
+            const endTime = addMinutes(time, 20);
+            const overlaps = dateStr && isOverlapping(dateStr, time, endTime);
+            const disabled = !dateStr || past || isDisabled || overlaps || taken;
+            const tooltip = overlaps || taken ? "Time already selected or overlaps" : past ? "Past time" : isDisabled ? "Custom slots exist" : "";
             return (
               <button
                 key={time}
                 onClick={() => !disabled && handleBlockClick(time)}
                 disabled={disabled}
-                className={`time-btn ${past ? "past" : overlapped ? "overlapped" : taken ? "taken" : "available"}`}
+                className={`time-btn ${past ? "past" : isDisabled ? "disabled" : overlaps ? "overlaps" : taken ? "taken" : "available"}`}
+                title={tooltip}
               >
                 {formatTime12(time + ":00").replace(":00", "")}
               </button>
@@ -377,25 +466,87 @@ const PresetBlocksAvailability = () => {
     );
   };
 
-  const ExtraSlotsSection = () => {
+  const CustomSlotsSection = () => {
     const dateStr = selectedDate ? selectedDate.toISOString().split("T")[0] : null;
     if (!dateStr) return null;
-    const extraSlots = getExtraSlots(dateStr);
 
     return (
-      <div className="shift-card extra-slots">
-        <h3>Extra Slots</h3>
-        {extraSlots.length > 0 ? (
-          <div className="shift-slots">
-            {extraSlots.map((slot) => (
-              <div key={slot.ID} className={`slot-item ${slot.Status}`}>
-                <span>{formatTime12(slot.Start_Time)} - {formatTime12(slot.End_Time)}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No extra slots for this date.</p>
-        )}
+      <div
+        className="shift-card custom-slots"
+        style={{
+          backgroundColor: "#f9f9f9",
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+          padding: "15px",
+          margin: "10px 0",
+        }}
+      >
+        <h3 style={{ margin: "0 0 10px 0", fontSize: "1.2em" }}>Custom Slots</h3>
+        <div
+          className="custom-slot-form"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              fontSize: "0.9em",
+            }}
+          >
+            Start Time:
+            <input
+              type="time"
+              value={customStartTime}
+              onChange={(e) => setCustomStartTime(e.target.value)}
+              style={{
+                padding: "8px",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                fontSize: "0.9em",
+              }}
+            />
+          </label>
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              fontSize: "0.9em",
+            }}
+          >
+            Duration (minutes):
+            <input
+              type="number"
+              value={customDuration}
+              onChange={(e) => setCustomDuration(e.target.value)}
+              min="5"
+              style={{
+                padding: "8px",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                fontSize: "0.9em",
+              }}
+            />
+          </label>
+          <button
+            className="add-custom-slot-btn"
+            onClick={handleCustomSlotSubmit}
+            style={{
+              padding: "10px",
+              backgroundColor: "#4CAF50",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "0.9em",
+            }}
+          >
+            Add Custom Slot
+          </button>
+        </div>
       </div>
     );
   };
@@ -465,9 +616,7 @@ const PresetBlocksAvailability = () => {
         return;
       }
       const dateStr = newDate;
-      const now = new Date();
-      const todayStr = now.toISOString().split("T")[0];
-      if (dateStr === todayStr && isPastTime(dateStr, newStartTime)) {
+      if (isPastTime(dateStr, newStartTime)) {
         setError("You cannot set availability for past times.");
         return;
       }
@@ -615,12 +764,59 @@ const PresetBlocksAvailability = () => {
           <div className="selected-date">
             {selectedDate ? <strong>Selected: {selectedDate.toDateString()}</strong> : <em>No date selected</em>}
           </div>
+          {selectedDate && (
+            <div
+              className="slot-mode-toggle"
+              style={{
+                display: "flex",
+                gap: "10px",
+                marginTop: "10px",
+                justifyContent: "center",
+              }}
+            >
+              <button
+                className={`mode-btn ${slotMode === "default" ? "active" : ""}`}
+                onClick={() => setSlotMode("default")}
+                disabled={hasCustomSlots(selectedDate.toISOString().split("T")[0])}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: slotMode === "default" ? "#4CAF50" : "#e0e0e0",
+                  color: slotMode === "default" ? "#fff" : "#333",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  cursor: hasCustomSlots(selectedDate.toISOString().split("T")[0]) ? "not-allowed" : "pointer",
+                  opacity: hasCustomSlots(selectedDate.toISOString().split("T")[0]) ? 0.6 : 1,
+                }}
+              >
+                Default Slots
+              </button>
+              <button
+                className={`mode-btn ${slotMode === "custom" ? "active" : ""}`}
+                onClick={() => setSlotMode("custom")}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: slotMode === "custom" ? "#4CAF50" : "#e0e0e0",
+                  color: slotMode === "custom" ? "#fff" : "#333",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Custom Slots
+              </button>
+            </div>
+          )}
         </div>
         <div className="shifts">
-          <ShiftBlock title="Morning (9:00 - 12:00)" blocks={morningBlocks} />
-          <ShiftBlock title="Afternoon (1:00 - 4:00)" blocks={afternoonBlocks} />
-          <ShiftBlock title="Evening (5:00 - 7:00)" blocks={eveningBlocks} />
-          <ExtraSlotsSection />
+          {slotMode === "default" && (
+            <>
+              <ShiftBlock title="Morning (10:00 - 12:00)" blocks={morningBlocks} />
+              <ShiftBlock title="Afternoon (1:00 - 4:00)" blocks={afternoonBlocks} />
+              <ShiftBlock title="Evening (5:00 - 7:00)" blocks={eveningBlocks} />
+            </>
+          )}
+          {slotMode === "custom" && <CustomSlotsSection />}
+          {/* Removed <ExtraSlotsSection /> as it's no longer needed */}
         </div>
       </div>
       <div className="availability-list">

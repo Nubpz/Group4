@@ -1,3 +1,4 @@
+// src/pages/DoctorPage.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./design/TherapistPage.css";
@@ -11,18 +12,19 @@ const DoctorPage = () => {
   const [error, setError] = useState(null);
   const [selectedTab, setSelectedTab] = useState("dashboard");
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false); // New state for logout modal
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [profileFormData, setProfileFormData] = useState({
     firstName: "",
     lastName: "",
-    gender: ""
+    gender: "",
   });
   const [profileSubmitting, setProfileSubmitting] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
+  const [locationError, setLocationError] = useState("");
+  const [locationSuccess, setLocationSuccess] = useState("");
   const navigate = useNavigate();
 
-  // Menu items with icons
   const menuItems = [
     {
       id: "dashboard",
@@ -44,7 +46,7 @@ const DoctorPage = () => {
           <rect x="14" y="12" width="7" height="9"></rect>
           <rect x="3" y="16" width="7" height="5"></rect>
         </svg>
-      )
+      ),
     },
     {
       id: "availability",
@@ -66,7 +68,7 @@ const DoctorPage = () => {
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
-      )
+      ),
     },
     {
       id: "appointments",
@@ -86,7 +88,7 @@ const DoctorPage = () => {
           <path d="M12 20h9"></path>
           <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"></path>
         </svg>
-      )
+      ),
     },
     {
       id: "profile",
@@ -106,11 +108,10 @@ const DoctorPage = () => {
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
-      )
-    }
+      ),
+    },
   ];
 
-  // Fetch therapist info on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -127,8 +128,8 @@ const DoctorPage = () => {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       });
       if (!response.ok) throw new Error("Failed to fetch therapist details");
       const data = await response.json();
@@ -137,7 +138,7 @@ const DoctorPage = () => {
       setProfileFormData({
         firstName: data.first_name || "",
         lastName: data.last_name || "",
-        gender: data.gender || ""
+        gender: data.gender || "",
       });
 
       const isIncomplete = !data.first_name || !data.last_name || !data.gender;
@@ -152,14 +153,13 @@ const DoctorPage = () => {
     }
   };
 
-  // Profile form input changes
   const handleProfileInputChange = (e) => {
     const { name, value } = e.target;
     setProfileFormData({ ...profileFormData, [name]: value });
   };
 
   const handleLogout = () => {
-    setShowLogoutConfirm(true); // Show logout confirmation modal
+    setShowLogoutConfirm(true);
   };
 
   const confirmLogout = () => {
@@ -172,7 +172,6 @@ const DoctorPage = () => {
     setShowLogoutConfirm(false);
   };
 
-  // Save profile
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setProfileSubmitting(true);
@@ -198,13 +197,13 @@ const DoctorPage = () => {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           firstName,
           lastName,
-          gender
-        })
+          gender,
+        }),
       });
       if (!response.ok) {
         const errData = await response.json();
@@ -226,6 +225,56 @@ const DoctorPage = () => {
     }
   };
 
+  const handleSetLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLocationError("No token found. Please log in again.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log("Geolocation coordinates:", { latitude, longitude });
+        try {
+          const res = await fetch("http://localhost:3000/user/location", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ latitude, longitude }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.message || "Failed to update location");
+          }
+          setLocationSuccess("Location updated successfully!");
+          setLocationError("");
+          setTherapistInfo((prev) => ({
+            ...prev,
+            latitude,
+            longitude,
+          }));
+          setTimeout(() => setLocationSuccess(""), 3000);
+        } catch (err) {
+          console.error("Error updating location:", err);
+          setLocationError(err.message);
+          setLocationSuccess("");
+        }
+      },
+      (err) => {
+        setLocationError(`Geolocation error: ${err.message}`);
+        setLocationSuccess("");
+      }
+    );
+  };
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     const name =
@@ -238,7 +287,6 @@ const DoctorPage = () => {
     return `Good Evening, ${name}`;
   };
 
-  // Renders each tab’s content
   const renderMainContent = () => {
     switch (selectedTab) {
       case "dashboard":
@@ -317,7 +365,17 @@ const DoctorPage = () => {
                     {therapistInfo?.cert_number ?? "Not available"}
                   </span>
                 </div>
+                <div className="profile-detail-item">
+                  <span className="detail-label">Location:</span>
+                  <span className="detail-value">
+                    {therapistInfo?.latitude && therapistInfo?.longitude
+                      ? `${therapistInfo.latitude}, ${therapistInfo.longitude}`
+                      : "Not set"}
+                  </span>
+                </div>
               </div>
+              {locationError && <p className="error">{locationError}</p>}
+              {locationSuccess && <p className="message">{locationSuccess}</p>}
               <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
                 <button
                   className="edit-profile-button"
@@ -333,7 +391,7 @@ const DoctorPage = () => {
                     borderRadius: "4px",
                     cursor: "pointer",
                     fontSize: "1rem",
-                    transition: "background-color 0.3s"
+                    transition: "background-color 0.3s",
                   }}
                   onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#0056b3")}
                   onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#007bff")}
@@ -355,6 +413,41 @@ const DoctorPage = () => {
                   Edit Profile
                 </button>
                 <button
+                  className="set-location-button"
+                  onClick={handleSetLocation}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    backgroundColor: "#52b788",
+                    color: "white",
+                    border: "none",
+                    padding: "0.5rem 1rem",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "1rem",
+                    transition: "background-color 0.3s",
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#40916c")}
+                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#52b788")}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  Set my Location
+                </button>
+                <button
                   className="logout-button"
                   onClick={handleLogout}
                   style={{
@@ -368,7 +461,7 @@ const DoctorPage = () => {
                     borderRadius: "4px",
                     cursor: "pointer",
                     fontSize: "1rem",
-                    transition: "background-color 0.3s"
+                    transition: "background-color 0.3s",
                   }}
                   onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#cc0000")}
                   onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#ff4d4d")}
@@ -384,7 +477,7 @@ const DoctorPage = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    <path d="M9 21H5a2 2 0 1 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                     <polyline points="16 17 21 12 16 7"></polyline>
                     <line x1="21" y1="12" x2="9" y2="12"></line>
                   </svg>
@@ -399,7 +492,6 @@ const DoctorPage = () => {
     }
   };
 
-  // Modal for profile completion
   const ProfileSetupModal = () => {
     return (
       <div className={`modal ${showProfileModal ? "show" : ""}`}>
@@ -414,7 +506,7 @@ const DoctorPage = () => {
               fontSize: "24px",
               cursor: "pointer",
               color: "#333",
-              fontWeight: "bold"
+              fontWeight: "bold",
             }}
           >
             ×
@@ -484,7 +576,6 @@ const DoctorPage = () => {
     );
   };
 
-  // Modal for logout confirmation
   const LogoutConfirmModal = () => {
     return (
       <div className={`modal ${showLogoutConfirm ? "show" : ""}`}>
@@ -499,7 +590,7 @@ const DoctorPage = () => {
               fontSize: "24px",
               cursor: "pointer",
               color: "#333",
-              fontWeight: "bold"
+              fontWeight: "bold",
             }}
           >
             ×
@@ -519,7 +610,7 @@ const DoctorPage = () => {
                 borderRadius: "4px",
                 cursor: "pointer",
                 fontSize: "1rem",
-                transition: "background-color 0.3s"
+                transition: "background-color 0.3s",
               }}
               onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#5a6268")}
               onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#6c757d")}
@@ -536,7 +627,7 @@ const DoctorPage = () => {
                 borderRadius: "4px",
                 cursor: "pointer",
                 fontSize: "1rem",
-                transition: "background-color 0.3s"
+                transition: "background-color 0.3s",
               }}
               onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#cc0000")}
               onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#ff4d4d")}
