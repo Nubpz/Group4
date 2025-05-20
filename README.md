@@ -53,7 +53,7 @@ Replace the placeholders below with your actual screenshots and descriptions.
 ### 2. Location in Admin Page
 
 ![User Location](images/user_location.png)
-*Therapists can update their working location, visible to patients.*
+*Users can update their location, visible to Admins.*
 
 ### 3. Parent: Appointment Booking Page
 
@@ -202,6 +202,15 @@ GROUP_PROJECT/
 
 ## Installation and Setup
 
+### Cloning the Repository
+
+First, clone the repository from GitHub to your local machine:
+
+```bash
+git clone https://github.com/nubpz/Group4.git
+cd Group4
+```
+
 ### Prerequisites
 
 * [Node.js v14+](https://nodejs.org/)
@@ -213,7 +222,42 @@ GROUP_PROJECT/
 ---
 
 ### Database Setup
+## Setting the Initial Admin Password
 
+> **IMPORTANT:**
+> For security, the admin password is stored as a hashed value in the database.
+> You must generate a secure hashed password for the admin account **before first login**.
+
+**To generate a hash using Python and Flask-Bcrypt:**
+
+1. Open a Python shell:
+
+   ```bash
+   python
+   ```
+
+2. Run the following:
+
+   ```python
+   from flask_bcrypt import Bcrypt
+   bcrypt = Bcrypt()
+   hash = bcrypt.generate_password_hash("your_new_admin_password").decode('utf-8')
+   print(hash)
+   ```
+
+   Replace `"your_new_admin_password"` with the password you want for the admin account.
+
+3. Copy the output hash.
+
+4. Log in to MySQL and update the admin user's password:
+
+   ```sql
+   UPDATE USERS SET password = 'paste_the_hash_here' WHERE username = 'Admin';
+   ```
+
+   *(Make sure the username matches your admin user)*
+
+**RUN DATABASE**
 1. **Start MySQL.**
 2. **In a terminal:**
 
@@ -228,7 +272,7 @@ GROUP_PROJECT/
    SOURCE /path/to/database/therapy_clinic.sql;
    ```
 
-   (Adjust path to match your folder.)
+
 
 ---
 
@@ -258,7 +302,7 @@ GROUP_PROJECT/
    ```
 
    * [Generate an app password with Gmail](https://support.google.com/accounts/answer/185833).
-   * **Never commit `.env` to GitHub.**
+   
 5. **No need to set DB credentials in `.env` (they are hardcoded in `app.py`).**
 
 ---
@@ -462,7 +506,3 @@ npm start
 This project is open source for educational use.
 
 ---
-
-**Tip:**
-Update this README as your app evolves!
-Add new screenshots to the `images/` directory and update links above.
