@@ -1,7 +1,7 @@
 // src/pages/DoctorPage.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./design/TherapistPage.css";
+import "../design/therapistPageCss/TherapistPage.css";
 import Availability from "./Availability";
 import Appointments from "./Appointments";
 import TDashboard from "./Tdashboard";

@@ -1,0 +1,814 @@
+/* TherapistPage.css - Matching the admin-like styling */
+
+/* Reset/base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f0f4f8;
+  color: #333;
+}
+
+/* Layout container for the doctor page */
+.doctor-page {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Side menu styles - similar to admin's side menu */
+.side-menu {
+  width: 250px;
+  background-color: #2d6a4f;
+  color: #fff;
+  padding: 30px 0;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.greeting {
+  padding: 0 20px 20px;
+  font-size: 18px;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+}
+
+.side-menu ul {
+  list-style: none;
+}
+
+.side-menu li {
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.side-menu li:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.side-menu li.active {
+  background-color: #52b788;
+  font-weight: 600;
+  position: relative;
+}
+
+.side-menu li.active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background-color: #fff;
+}
+
+/* Menu icon styles */
+.menu-icon {
+  margin-right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: color 0.3s;
+}
+
+.menu-label {
+  transition: font-weight 0.3s;
+}
+
+.side-menu li:hover .menu-icon,
+.side-menu li.active .menu-icon {
+  color: #fff;
+}
+
+.side-menu li:hover .menu-label,
+.side-menu li.active .menu-label {
+  font-weight: 500;
+}
+
+/* Main content offset from side menu */
+.main-content {
+  flex: 1;
+  padding: 30px;
+  margin-left: 250px; /* offset for side menu */
+  width: calc(100% - 250px);
+}
+
+/* Basic heading styling */
+.main-content h1 {
+  color: #2d6a4f;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+/* Loader / error styling (similar to admin) */
+.loader {
+  display: inline-block;
+  padding: 10px;
+  font-size: 16px;
+  color: #52b788;
+}
+
+.error-message {
+  margin: 20px 0;
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 12px 15px;
+  border-left: 4px solid #c62828;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Dashboard, Availability, etc. sections */
+.dashboard-section,
+.availability-section,
+.appointments-section,
+.profile-section {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Profile Card styles */
+.profile-info-card {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-top: 20px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.profile-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: #52b788;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+  color: white;
+}
+
+.avatar-initials {
+  font-size: 24px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.profile-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.profile-subtitle {
+  color: #666;
+  margin: 5px 0 0 0;
+  font-size: 14px;
+}
+
+.profile-details {
+  margin-bottom: 25px;
+}
+
+.profile-detail-item {
+  display: flex;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.profile-detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  flex: 0 0 170px;
+  font-weight: 600;
+  color: #555;
+}
+
+.detail-value {
+  flex: 1;
+  color: #333;
+}
+
+/* Edit profile button */
+.edit-profile-button {
+  background-color: #52b788;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.edit-profile-button:hover {
+  background-color: #40916c;
+}
+
+/* Status badges for verification status */
+.status-badge.available {
+  background-color: #e6f7ef;
+  color: #2ecc71;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.pending {
+  background-color: #fef3e8;
+  color: #f39c12;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Modal overlay for profile editing */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 30px;
+  width: 600px;
+  max-width: 90%;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.profile-modal {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.modal-content h2 {
+  color: #2d6a4f;
+  margin-bottom: 15px;
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.modal-intro {
+  text-align: center;
+  color: #666;
+  margin-bottom: 25px;
+  font-size: 15px;
+}
+
+/* Form within modal */
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+.form-row .input-group {
+  flex: 1;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #555;
+  font-size: 14px;
+}
+
+.input-group input,
+.input-group select {
+  padding: 12px 15px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  border-color: #52b788;
+  box-shadow: 0 0 5px rgba(82, 183, 136, 0.3);
+  outline: none;
+}
+
+.form-submit {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.submit-button {
+  background-color: #52b788;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  min-width: 200px;
+}
+
+.submit-button:hover {
+  background-color: #40916c;
+}
+
+.submit-button:disabled {
+  background-color: #b0b0b0;
+  cursor: not-allowed;
+}
+
+/* Error and success messages inside modal */
+.error-message,
+.success-message {
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  border-left: 4px solid #c62828;
+}
+
+.success-message {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-left: 4px solid #2e7d32;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .doctor-page {
+    flex-direction: column;
+  }
+
+  .side-menu {
+    width: 100%;
+    height: auto;
+    position: relative;
+    padding: 15px 0;
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 20px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .modal-content {
+    padding: 20px;
+    width: 90%;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .profile-avatar {
+    margin: 0 auto 15px;
+  }
+  
+  .profile-detail-item {
+    flex-direction: column;
+  }
+  
+  .detail-label {
+    margin-bottom: 5px;
+  }
+}
+
+/* availability.css */
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal Content */
+.modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 25px;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.modal-content h2 {
+  color: #2d6a4f;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Booking Details */
+.booking-details {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  flex: 0 0 100px;
+  font-weight: 600;
+  color: #555;
+  font-size: 14px;
+}
+
+.detail-value {
+  flex: 1;
+  color: #333;
+  font-size: 14px;
+}
+
+/* Edit Form */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.edit-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #555;
+}
+
+.edit-form input {
+  margin-top: 5px;
+  padding: 10px;
+  border: 1px solid #dcdcdc;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.edit-form input:focus {
+  border-color: #52b788;
+  outline: none;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.modal-btn.save-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.modal-btn.save-btn:hover {
+  background-color: #218838;
+}
+
+.modal-btn.cancel-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.modal-btn.cancel-btn:hover {
+  background-color: #c82333;
+}
+
+.modal-btn.close-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.modal-btn.close-btn:hover {
+  background-color: #5a6268;
+}
+
+.modal-close-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s;
+}
+
+.modal-close-btn:hover {
+  background-color: #5a6268;
+}
+
+.confirm-delete {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8d7da;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.confirm-delete p {
+  color: #721c24;
+  margin-bottom: 10px;
+}
+
+.modal-btn.delete-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.modal-btn.delete-btn:hover {
+  background-color: #c82333;
+}
+
+/* Action Buttons in Table */
+.action-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-right: 5px;
+  transition: background-color 0.3s;
+}
+
+.action-btn.edit-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.action-btn.edit-btn:hover {
+  background-color: #218838;
+}
+
+.action-btn.view-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.action-btn.view-btn:hover {
+  background-color: #0069d9;
+}
+
+/* Existing Styles (assuming these are already in your availability.css) */
+.preset-container {
+  padding: 20px;
+}
+
+.confirmation-msg {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.calendar-box {
+  margin-right: 20px;
+}
+
+.shifts {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.shift-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.shift-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.time-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.time-btn.available {
+  background-color: #52b788;
+  color: white;
+}
+
+.time-btn.taken {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.time-btn.past {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.tabs {
+  margin-bottom: 15px;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  margin-right: 10px;
+  border: none;
+  background-color: #f0f0f0;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background-color: #52b788;
+  color: white;
+}
+
+.avail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.avail-table th,
+.avail-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.no-data {
+  color: #666;
+  text-align: center;
+  padding: 20px;
+}
+
+.time-btn {
+  padding: 8px 12px;
+  margin: 4px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.time-btn.available {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.time-btn.taken {
+  background-color: #ff9800;
+  color: white;
+}
+
+.time-btn.past {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.time-btn.disabled {
+  background-color: #e0e0e0;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.time-btn.overlaps {
+  background-color: #f44336;
+  color: white;
+  cursor: not-allowed;
+}
+
+.time-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Optional: Enhance tooltip visibility */
+.time-btn:hover {
+  opacity: 0.9;
+}

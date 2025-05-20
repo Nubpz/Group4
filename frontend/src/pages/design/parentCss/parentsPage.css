@@ -1,0 +1,1030 @@
+/* Overall Parents Page Layout */
+.parents-page {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f0f9f0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #333;
+}
+
+/* Side Menu */
+.side-menu {
+  width: 220px;
+  background-color: #2d6a4f;
+  color: #fff;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.side-menu .greeting {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+.side-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.side-menu ul li {
+  padding: 12px;
+  margin: 8px 0;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+.side-menu ul li.active,
+.side-menu ul li:hover {
+  background-color: #95d5b2;
+  color: #2d6a4f;
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  padding: 30px;
+  background-color: #fff;
+  box-sizing: border-box;
+}
+
+/* Home Tab (Dashboard) */
+.home-tab {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.home-tab h2 {
+  margin-bottom: 15px;
+  color: #2d6a4f;
+  font-size: 24px;
+  font-weight: 600;
+}
+.appointments-group {
+  margin-bottom: 30px;
+}
+.appointments-table {
+  width: 100%;
+  border-collapse: separate; /* use separate to allow rounded corners */
+  border-spacing: 0;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.appointments-table th,
+.appointments-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+.appointments-table th {
+  background-color: #52b788;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Accounts Tab (Children Cards) */
+.accounts-tab .accounts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.add-child-btn {
+  background-color: #52b788;
+  color: #fff;
+  padding: 10px 16px; /* Larger padding for a bigger button */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px; /* Larger text */
+}
+.children-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* Increased gap between child cards */
+  margin-top: 10px; /* Extra spacing from above content */
+}
+.child-card {
+  background-color: #fff;
+  width: 140px;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.child-card:hover {
+  transform: translateY(-3px);
+}
+.child-card.selected {
+  border: 2px solid #52b788;
+}
+.child-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #52b788;
+  color: #fff;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+.child-info p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #2d6a4f;
+}
+
+/* Profile Tab */
+.profile-tab {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.profile-details p {
+  margin: 8px 0;
+  font-size: 16px;
+  color: #2d6a4f;
+}
+.edit-profile-btn {
+  background-color: #52b788;
+  color: #fff;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+/* Modal for Add Child (and similar modals) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 700px; /* default width */
+  box-sizing: border-box;
+}
+.modal-content.reschedule-modal-content {
+  width: 900px !important; /* larger width for the reschedule modal */
+}
+.input-group {
+  margin-bottom: 15px;
+}
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #2d6a4f;
+}
+.input-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.modal-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.cancel-btn {
+  background-color: #e74c3c;
+  color: #fff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s;
+  margin-top: 20px;
+}
+.reschedule-btn {
+  background-color: #f39c12; /* Example color for reschedule button */
+  color: #fff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s;
+  margin-top: 20px;
+}
+
+/* Appointment Booking UI (Appointments Tab) */
+.appointment-booking {
+  background-color: #f0f9f0;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.booking-section {
+  margin-bottom: 20px;
+}
+.booking-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #2d6a4f;
+}
+.booking-section select,
+.booking-section input,
+.booking-section textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Appointment Options (Type & Reason) */
+.appointment-options {
+  margin-bottom: 20px;
+  padding-top: 10px; /* Extra space above appointment options */
+}
+.appointment-type {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+.appointment-type label {
+  font-size: 14px;
+  color: #2d6a4f;
+}
+.reason-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* 3-Column Layout for Booking */
+.booking-3columns {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+/* Column 1: Therapist Section (Vertical List) */
+.booking-therapist {
+  flex: 1;
+  min-width: 200px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  box-sizing: border-box;
+}
+.booking-therapist label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #2d6a4f;
+}
+.therapist-row {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  overflow-y: auto;
+  padding-bottom: 10px;
+}
+.therapist-row-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 180px;
+  background-color: #fff;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.therapist-row-item:hover {
+  background-color: #f9f9f9;
+}
+.therapist-row-item.available {
+  background-color: #e0f7fa;
+  border: 6px solid #17c100;
+  color: #006064;
+}
+.therapist-row-item.selected {
+  background-color: #52b788;
+  border-color: #2d6a4f;
+  color: #fff;
+}
+.therapist-initials {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #5452b7;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+}
+.therapist-details {
+  display: flex;
+  flex-direction: column;
+}
+.therapist-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d6a4f;
+}
+.therapist-description {
+  font-size: 12px;
+  color: #777;
+}
+
+/* Column 2: Calendar */
+.booking-calendar {
+  flex: 1;
+  min-width: 250px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.booking-calendar label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #2d6a4f;
+}
+
+/* Column 3: Available Times */
+.booking-timeslots {
+  flex: 1;
+  min-width: 250px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  box-sizing: border-box;
+}
+.booking-timeslots label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #2d6a4f;
+}
+
+/* React Calendar Customization */
+.react-calendar {
+  width: 100%;
+  border: none;
+  font-family: inherit;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+.react-calendar__tile {
+  padding: 10px 6px;
+  height: 45px;
+}
+.react-calendar__tile--active {
+  background-color: #52b788 !important;
+  color: #fff !important;
+}
+.react-calendar__tile--now {
+  background-color: #d8f3dc !important;
+}
+.react-calendar__tile:disabled {
+  background-color: #f0f4f8;
+  color: #ccc;
+}
+
+/* Timeslot Button Styling: Grid layout for consistent slot sizing */
+.timeslot-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+.time-slot-btn {
+  background-color: #52b788;
+  color: #fff;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+  font-size: 14px;
+}
+.time-slot-btn:hover {
+  background-color: #40916c;
+}
+.time-slot-btn.selected {
+  background-color: #95d5b2;
+  color: #2d6a4f;
+}
+
+/* Unavailable Time Slots */
+.time-slot-btn.unavailable {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Categorized Timeslot Sections */
+.timeslot-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.timeslot-category h4 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d6a4f;
+}
+
+/* Final Booking Button */
+.final-book-btn {
+  background-color: #52b788;
+  color: #fff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s;
+  margin-top: 20px;
+}
+.final-book-btn:hover {
+  background-color: #40916c;
+}
+
+/* Info Message */
+.info-message {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #e74c3c;
+}
+
+/* Confirmation and Error Messages */
+.confirmation-msg {
+  background-color: #e8f5e9;
+  border-left: 4px solid #52b788;
+  color: #2e7d32;
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+.error-message {
+  color: #c62828;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+/* Availability Table (if needed) */
+.avail-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.avail-table th {
+  background-color: #52b788;
+  color: #fff;
+  text-align: left;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.avail-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  color: #333;
+}
+.avail-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Reschedule Modal 2-Column Layout (for rescheduling window) */
+.reschedule-2columns {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  margin-top: 20px;
+  align-items: flex-start;
+}
+.reschedule-calendar,
+.reschedule-timeslots {
+  flex: 1;
+  min-width: 250px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .parents-page {
+    flex-direction: column;
+  }
+  .side-menu {
+    width: 100%;
+  }
+  .booking-3columns,
+  .reschedule-2columns {
+    flex-direction: column;
+  }
+  .children-cards,
+  .therapist-row {
+    justify-content: center;
+  }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(30deg);
+  }
+  50% {
+    transform: translateX(100%) rotate(30deg);
+  }
+  100% {
+    transform: translateX(-100%) rotate(30deg);
+  }
+}
+
+/* Parent Home Tab Styles (Matching Student Home Tab) */
+
+/* Home Tab General */
+.home-tab {
+  background: #f7f7f7;
+  border-radius: 16px;
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Section Base Styles */
+.home-tab section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* Greeting Section - Enhanced with Original Style */
+.home-tab .welcome-section .welcome-header {
+  background: linear-gradient(135deg, #95d5b2, #52b788);
+  padding: 20px;
+  color: #fff;
+  text-align: center;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.home-tab .welcome-section h2 {
+  margin: 0;
+  font-size: 32px; /* Larger for readability */
+  font-weight: 600;
+}
+.home-tab .welcome-section p {
+  margin: 6px 0 0;
+  font-size: 18px; /* Larger for clarity */
+  opacity: 0.9;
+}
+.home-tab .shine-effect {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.2); /* Slightly stronger shine */
+  transform: rotate(30deg);
+  animation: shine 6s infinite;
+}
+
+/* Quick Stats Section */
+.home-tab .stats-section {
+  background: #fff;
+}
+.home-tab .stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.home-tab .stat-card {
+  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+}
+.home-tab .stat-card h4 {
+  margin: 0;
+  color: #2d6a4f;
+  font-size: 16px; /* Increased for readability */
+  font-weight: 500;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+.home-tab .stat-card p {
+  font-size: 22px; /* Kept larger for visibility */
+  margin: 6px 0 0;
+  color: #555;
+}
+
+/* Dashboard Grid */
+.home-tab .dashboard-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.home-tab .dashboard-left,
+.home-tab .dashboard-right {
+  flex: 1;
+  min-width: 300px;
+}
+
+.home-tab .dashboard-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.home-tab .dashboard-card h3 {
+  color: #2d6a4f;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+/* Upcoming Appointments */
+.home-tab .upcoming-section .appointments-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-tab .appointment-card {
+  background-color: #f0f9f0;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.home-tab .appointment-card:hover {
+  transform: translateY(-2px);
+}
+
+.home-tab .appointment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.home-tab .appointment-header h4 {
+  margin: 0;
+  font-size: 14px;
+  color: #2d6a4f;
+}
+
+.home-tab .appointment-header span {
+  font-size: 12px;
+  color: #52b788;
+}
+
+.home-tab .appointment-card p {
+  margin: 5px 0;
+  font-size: 12px;
+}
+
+.home-tab .count-badge {
+  background-color: #52b788;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 10px;
+}
+
+/* Child Summary Section */
+.home-tab .children-section {
+  background: #fff;
+}
+.home-tab .children-section h3 {
+  font-size: 20px;
+  color: #2d6a4f;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.home-tab .children-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+.home-tab .child-card-summary {
+  padding: 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+}
+.home-tab .child-card-summary h4 {
+  margin: 0;
+  font-size: 18px; /* Increased for child names */
+  font-weight: 500;
+  color: #2d6a4f;
+}
+.home-tab .child-card-summary p {
+  margin: 3px 0;
+  font-size: 14px; /* Larger for readability */
+  color: #555;
+}
+
+/* Therapist Spotlight (Full-Screen Calendar Grid) */
+.home-tab .therapist-spotlight-section {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #f0f9f0 0%, #d8f3dc 100%);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.home-tab .therapist-spotlight {
+  min-height: 300px;
+}
+
+.home-tab .calendar-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.home-tab .calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.home-tab .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #333;
+  background-color: #f0f9f0;
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.home-tab .legend-item:hover {
+  background-color: #e6f2e6;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.home-tab .legend-item.selected {
+  background-color: #d8f3dc;
+  border-color: #2d6a4f;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  color: #2d6a4f;
+}
+
+.home-tab .legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.home-tab .calendar-days {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.home-tab .calendar-day {
+  flex: 1;
+  min-width: 140px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.home-tab .calendar-day-header {
+  font-size: 14px;
+  font-weight: bold;
+  color: #2d6a4f;
+  text-align: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.home-tab .calendar-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-tab .calendar-slot {
+  padding: 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.home-tab .calendar-slot:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.home-tab .slot-time {
+  font-weight: bold;
+}
+
+/* Fade-in Animation */
+.home-tab .fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Past Appointments Section */
+.home-tab .past-section {
+  background: #fff;
+}
+.home-tab .past-section h3 {
+  font-size: 20px;
+  color: #7f8c8d;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.home-tab .past-appointment-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+}
+.home-tab .past-appointment-card h4 {
+  margin: 0;
+  font-size: 18px; /* Increased for child names */
+  font-weight: 500;
+  color: #7f8c8d;
+}
+.home-tab .past-appointment-card p {
+  margin: 3px 0;
+  font-size: 14px; /* Larger for readability */
+  color: #777;
+}
+
+/* Quick Tips Section */
+.home-tab .tips-section {
+  background: #fff;
+}
+.home-tab .tips-section h3 {
+  font-size: 20px;
+  color: #2d6a4f;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.home-tab .tips-list {
+  list-style: none;
+  padding: 0;
+  color: #555;
+}
+.home-tab .tips-list li {
+  margin-bottom: 6px;
+  font-size: 14px; /* Larger for readability */
+  padding-left: 20px;
+  position: relative;
+}
+.home-tab .tips-list li:before {
+  content: "✓";
+  color: #52b788;
+  position: absolute;
+  left: 0;
+  font-size: 14px;
+}
+
+/* No Data Styling */
+.home-tab .no-data {
+  color: #777;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* src/design/parentsPage.css */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.modal-btn {
+  background-color: #52b788;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-btn {
+  background-color: #95a5a6;
+}
+
+.cancel-btn:hover {
+  background-color: #7f8c8d;
+}
+
+.appointment-details {
+  margin-bottom: 20px;
+}
+
+.appointment-details p {
+  margin: 8px 0;
+}
+
+.appointment-details a {
+  color: #2d6a4f;
+  text-decoration: underline;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Responsive Adjustments for Home Tab */
+@media (max-width: 768px) {
+  .home-tab .stats-container {
+    grid-template-columns: 1fr;
+  }
+  .home-tab .dashboard-grid {
+    flex-direction: column;
+  }
+}

@@ -1,7 +1,7 @@
 // src/components/Chatbot.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import './Chatbot.css';
+import '../design/chatBotCss/Chatbot.css';
 
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);

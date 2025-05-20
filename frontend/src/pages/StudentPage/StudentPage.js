@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import "../design/StudentPage.css";
+import "../design/studentCss/StudentPage.css";
 
 import StudentHomeTab from "./StudentHomeTab";
 import MyAppointmentsTab from "./MyAppointmentsTab";

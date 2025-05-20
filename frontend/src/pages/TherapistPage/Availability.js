@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import "./design/availability.css";
+import "../design/therapistPageCss/availability.css";
 
 const PresetBlocksAvailability = () => {
   const [availability, setAvailability] = useState([]);

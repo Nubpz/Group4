@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import FullCalendar from "@fullcalendar/react";
+import { Calendar } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
-import "./design/appointments.css";
+import "../design/therapistPageCss/appointments.css";
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -21,6 +21,7 @@ const Appointments = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const calendarRef = useRef(null);
+  const calendarContainerRef = useRef(null);
 
   useEffect(() => {
     fetchAppointments();
@@ -37,6 +38,85 @@ const Appointments = () => {
     });
     setFilteredAppointments(filtered);
   }, [appointments, statusFilter, typeFilter, searchQuery]);
+
+  useEffect(() => {
+    if (viewMode === 'calendar' && calendarContainerRef.current) {
+      const events = filteredAppointments.map(appt => {
+        // Parse the appointment time
+        const startDate = new Date(appt.Appointment_time);
+        console.log('Original Appointment Time:', appt.Appointment_time);
+        console.log('Parsed Start Date:', startDate);
+        
+        // Ensure we have a valid date
+        if (isNaN(startDate.getTime())) {
+          console.error('Invalid date for appointment:', appt);
+          return null;
+        }
+
+        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+
+        return {
+          id: String(appt.Appointment_ID),
+          title: `${appt.student_first_name} ${appt.student_last_name} - ${appt.Appointment_type}`,
+          start: startDate,
+          end: endDate,
+          allDay: false,
+          backgroundColor: appt.Status === "confirmed" ? "#2ecc71" : appt.Status === "cancelled" ? "#e74c3c" : "#f39c12",
+          borderColor: appt.Status === "confirmed" ? "#27ae60" : appt.Status === "cancelled" ? "#c0392b" : "#e67e22",
+          extendedProps: appt
+        };
+      }).filter(event => event !== null);
+
+      console.log('Processed Events:', events);
+
+      const calendar = new Calendar(calendarContainerRef.current, {
+        plugins: [dayGridPlugin, timeGridPlugin, listPlugin],
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        events: events,
+        eventClick: (info) => handleEditClick(info.event.extendedProps),
+        slotMinTime: "08:00:00",
+        slotMaxTime: "20:00:00",
+        allDaySlot: false,
+        slotDuration: "01:00:00",
+        height: "auto",
+        expandRows: true,
+        stickyHeaderDates: true,
+        dayMaxEvents: true,
+        displayEventTime: true,
+        displayEventEnd: true,
+        eventTimeFormat: {
+          hour: '2-digit',
+          minute: '2-digit',
+          meridiem: 'short'
+        },
+        nowIndicator: true,
+        scrollTime: '08:00:00',
+        // Add event rendering debug
+        eventDidMount: (info) => {
+          console.log('Event mounted:', {
+            title: info.event.title,
+            start: info.event.start,
+            end: info.event.end,
+            allDay: info.event.allDay
+          });
+        }
+      });
+
+      calendar.render();
+      calendarRef.current = calendar;
+
+      return () => {
+        if (calendarRef.current) {
+          calendarRef.current.destroy();
+        }
+      };
+    }
+  }, [viewMode, filteredAppointments]);
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -74,7 +154,7 @@ const Appointments = () => {
   const handleEditClick = (appointment) => {
     setSelectedAppointment(appointment);
     setFormData({
-      status: appointment.Status,
+      status: appointment.Status || "",
       meetingLink: appointment.Meeting_link || "",
     });
     setShowModal(true);
@@ -105,7 +185,7 @@ const Appointments = () => {
           },
           body: JSON.stringify({
             status: formData.status,
-            meetingLink: formData.status === "confirmed" ? formData.meetingLink : null, // Clear meetingLink if not confirmed
+            meetingLink: formData.meetingLink,
           }),
         }
       );
@@ -238,37 +318,10 @@ const Appointments = () => {
   );
 
   const renderCalendar = () => {
-    const events = filteredAppointments.map((appt) => ({
-      id: String(appt.Appointment_ID),
-      title: `${appt.student_first_name} ${appt.student_last_name} (${appt.Appointment_type})`,
-      start: appt.Appointment_time,
-      end: new Date(new Date(appt.Appointment_time).getTime() + 60 * 60 * 1000),
-      extendedProps: appt,
-      backgroundColor: appt.Status === "confirmed" ? "#2ecc71" : appt.Status === "cancelled" ? "#e74c3c" : "#f39c12",
-      borderColor: appt.Status === "confirmed" ? "#27ae60" : appt.Status === "cancelled" ? "#c0392b" : "#e67e22",
-    }));
-
     return (
-      <FullCalendar
-        ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
-        initialView="timeGridWeek"
-        events={events}
-        eventClick={(info) => handleEditClick(info.event.extendedProps)}
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
-        }}
-        slotMinTime="08:00:00"
-        slotMaxTime="20:00:00"
-        height="auto"
-        eventTimeFormat={{
-          hour: "numeric",
-          minute: "2-digit",
-          meridiem: "short",
-        }}
-      />
+      <div className="calendar-container">
+        <div ref={calendarContainerRef}></div>
+      </div>
     );
   };
 
@@ -317,7 +370,7 @@ const Appointments = () => {
                     <option value="cancelled">Cancelled</option>
                   </select>
                 </label>
-                {selectedAppointment.Appointment_type === "virtual" && formData.status === "confirmed" && (
+                {selectedAppointment.Appointment_type === "virtual" && (
                   <label>
                     Meeting Link:
                     <input

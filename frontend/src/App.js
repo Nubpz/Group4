@@ -1,12 +1,12 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
+import LoginPage from './pages/LoginPage/LoginPage';
 import ParentPage from './pages/ParentPage/ParentPage';
 import StudentPage from './pages/StudentPage/StudentPage';
-import DoctorPage from './pages/DoctorPage';
+import DoctorPage from './pages/TherapistPage/DoctorPage';
 import AdminPage from './pages/AdminPage/AdminPage';
-import Chatbot from './pages/Chatbot';
-import ResetPasswordPage from './pages/ResetPasswordPage';
+import Chatbot from './pages/ChatBot/Chatbot';
+import ResetPasswordPage from './pages/LoginPage/ResetPasswordPage';
 
 function App() {
   return (

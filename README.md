@@ -1,11 +1,13 @@
-# Therapy Appointment Scheduler - Full Stack
+# Therapy Appointment Scheduler – Full Stack
 
 ## Table of Contents
 
 * [Project Overview](#project-overview)
+* [Screenshots](#screenshots)
 * [Features](#features)
 * [Tech Stack](#tech-stack)
-* [Dependencies](#dependencies)
+* [Backend Dependencies](#backend-dependencies)
+* [Frontend Dependencies](#frontend-dependencies)
 * [Database Structure](#database-structure)
 * [File Structure](#file-structure)
 * [Default Credentials](#default-credentials)
@@ -15,152 +17,186 @@
   * [Database Setup](#database-setup)
   * [Backend Setup](#backend-setup)
   * [Frontend Setup](#frontend-setup)
+* [Environment Variables & Security](#environment-variables--security)
 * [Running the Application](#running-the-application)
-* [Pulling Latest Changes](#pulling-latest-changes)
+* [Navigating the Application](#navigating-the-application)
 * [API Documentation](#api-documentation)
 * [User Guides](#user-guides)
 * [Contributing](#contributing)
 * [Troubleshooting](#troubleshooting)
+* [Credits & License](#credits--license)
 
 ---
 
 ## Project Overview
 
-### Introduction
+The Therapy Appointment Scheduler is a robust, user-friendly web app for clinics and educational institutions. It allows parents, students, therapists, and admins to coordinate therapy appointments efficiently. Features include:
 
-This project is a comprehensive web-based **Therapy Appointment Scheduler** designed for multiple user roles within a therapy clinic or educational setting:
+* **Role-based dashboards**
+* **Natural language chatbot**
+* **Email notifications**
+* **Secure authentication**
+* **Modern UI**
 
-* **Parents:** Manage appointments for their children
-* **Students:** Schedule or view their therapy sessions
-* **Doctors/Therapists/Tutors:** Set availability and manage bookings
-* **Admin:** System-wide management with elevated privileges
+---
 
-The application provides an intuitive interface for scheduling, managing, and tracking therapy appointments with a focus on user experience and security.
+## Screenshots
 
-### Key Components
+Store all screenshots in the `images/` folder.
+Replace the placeholders below with your actual screenshots and descriptions.
 
-* Role-based authentication system with JWT token security
-* Responsive UI with real-time form validations
-* MySQL database for persistent data storage
-* RESTful API backend built with Flask
-* React frontend with modern, minimalistic design
+### 1. Therapist: Availability Setting Page
+
+![Therapist Availability](images/therapist_availability.png)
+*Therapists can specify available days and times for appointments.*
+
+### 2. Location in Admin Page
+
+![User Location](images/user_location.png)
+*Therapists can update their working location, visible to patients.*
+
+### 3. Parent: Appointment Booking Page
+
+![Parent Booking](images/parent_booking.png)
+*Parents select a child, choose a therapist, and book appointments using a guided flow.*
+
+### 4. Chatbot Interaction Page
+
+![Chatbot Scheduling](images/chatbot_scheduling.png)
+*Chatbot interface allows users to book, reschedule, or cancel appointments using simple language.*
+
+### 5. Student Dashboard
+
+![Student Dashboard](images/student_dashboard.png)
+*Students view and manage their upcoming therapy sessions.*
+
+*(Add or rename screenshots as needed. Update file paths as you add more.)*
 
 ---
 
 ## Features
 
-### Role-Based Authentication
-
-* **Registration & Login:**
-  Users register with email (username), password, and role selection (Parent, Therapist/Tutor, or Student). Admin accounts are pre-configured in the database.
-* **Secure Authentication:**
-  Passwords are securely hashed using bcrypt with JWT tokens generated upon successful login.
-* **Role-Based Navigation:**
-  Users are redirected to role-specific dashboards after authentication.
-
-### User-Friendly Interface
-
-* **Responsive Design:**
-  Fully responsive layout that works on desktop and mobile devices.
-* **Form Validations:**
-  Real-time email format validation and input field verification.
-* **Password Security:**
-  Password visibility toggle with strength indicators.
-* **Interactive Feedback:**
-  Instant error and success messages during form submission.
-
-### Appointment Management
-
-* **Scheduling Interface:**
-  Intuitive calendar for booking appointments.
-* **Availability Settings:**
-  Therapists can set their available time slots.
-* **Appointment Status:**
-  Track pending, confirmed, and completed sessions.
+* **Registration & Login:** Distinct flows for Parent, Student, Therapist. Admins are pre-configured in the database.
+* **JWT Authentication:** Secure login, with tokens issued on authentication.
+* **Appointment Management:** Schedule, reschedule, or cancel via dashboard or chatbot.
+* **Therapist Availability:** Therapists set weekly availability, editable anytime.
+* **Calendar View:** Parents and students can see upcoming and past appointments.
+* **Email Alerts:** Get notified for new appointments and changes.
+* **Chatbot:** Use natural language to manage appointments.
+* **Admin Panel:** Full system/user management.
+* **Responsive Design:** Works on desktop and mobile.
 
 ---
 
 ## Tech Stack
 
-* **Frontend:** React.js
+* **Frontend:** React.js (with CSS modules)
 * **Backend:** Flask (Python)
 * **Database:** MySQL
-* **Authentication:** JWT (JSON Web Tokens)
-* **Styling:** CSS with responsive design principles
+* **Authentication:** JWT (Flask-JWT-Extended)
+* **AI/NLP:** spaCy + English language model
+* **Other:** Flask-Bcrypt, Flask-CORS, MySQL Connector, Email (via SMTP)
 
 ---
 
-## Dependencies
+## Backend Dependencies
 
-### Backend (Flask)
+Add these lines to `backend/requirements.txt`:
 
-* Flask (v2.0+) – Lightweight web framework
-* Flask-CORS – For handling cross-origin requests
-* mysql-connector-python – MySQL database connector
-* Flask-Bcrypt – For secure password hashing
-* Flask-JWT-Extended – For JWT-based authentication
+```txt
+Flask
+Flask-CORS
+Flask-Bcrypt
+Flask-JWT-Extended
+mysql-connector-python
+python-dateutil
+spacy
+```
 
-### Frontend (React)
+**Install spaCy model:**
 
-* React (v17+) – UI library
-* react-router-dom (v6+) – Routing library
-* jwt-decode – To decode JWT tokens
-* Fetch API – For HTTP requests
+```bash
+python -m spacy download en_core_web_sm
+```
 
-*All libraries used are open source.*
+---
+
+## Frontend Dependencies
+
+Your main frontend dependencies are managed via `frontend/package.json`.
+Key libraries:
+
+* `react`
+* `react-dom`
+* `react-router-dom`
+* `jwt-decode`
+* (Install with `npm install`)
 
 ---
 
 ## Database Structure
 
-The database consists of the following tables:
+Tables:
 
-```
-+--------------------------+
-| Tables_in_therapy_clinic |
-+--------------------------+
-| ADMIN                    |
-| APPOINTMENTS             |
-| AVAILABILITY             |
-| GUARDIAN                 |
-| PARENT                   |
-| STUDENT                  |
-| THERAPIST                |
-| USERS                    |
-+--------------------------+
-```
+* `ADMIN` – Admins (pre-configured)
+* `USERS` – Authentication/role
+* `STUDENT` – Student info
+* `PARENT` – Parent info
+* `THERAPIST` – Therapist info
+* `APPOINTMENTS` – All bookings
+* `AVAILABILITY` – Therapist available slots
+* `GUARDIAN` – Parent-student link
 
-**USERS Table Structure**
-
-```
-+---------+----------+----------+-------+---------------------+-----------+------------+
-| USER_ID | username | password | ROLE  | created_at          | latitude  | longitude  |
-+---------+----------+----------+-------+---------------------+-----------+------------+
-```
-
-The database is designed with a role-based structure where user authentication data is stored in the **USERS** table, while role-specific information is stored in separate tables (**ADMIN**, **PARENT**, **STUDENT**, **THERAPIST**). Appointment scheduling is managed through the **APPOINTMENTS** and **AVAILABILITY** tables, while the **GUARDIAN** table maintains relationships between parents and students.
+Run the schema with the provided `database/therapy_clinic.sql`.
 
 ---
 
 ## File Structure
 
-The project's file structure is represented in an image within the repository. Please refer to the canvas image for the complete visual representation.
-
-Key directories and files:
-
-* **backend/** – Contains Flask server and API endpoints
-* **frontend/** – Contains React components and UI
-* **database/** – Contains SQL scripts for database setup
+```
+GROUP_PROJECT/
+│
+├── backend/
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── routes/
+│   │   ├── adminRoute/
+│   │   ├── authenticationRoute/
+│   │   ├── chatBotRoute/
+│   │   ├── parentRoute/
+│   │   ├── studentRoute/
+│   │   └── therapistRoute/
+│   ├── utils/
+│   └── .env (dummy)
+│
+├── database/
+│   ├── therapy_clinic.sql
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   └── pages/
+│   │       ├── AdminPage/
+│   │       ├── ChatBot/
+│   │       ├── LoginPage/
+│   │       ├── ParentPage/
+│   │       ├── StudentPage/
+│   │       └── TherapistPage/
+│   ├── package.json
+│
+├── images/
+│   └── (All screenshots go here)
+```
 
 ---
 
 ## Default Credentials
 
-| Role  | Username | Password   |
-| ----- | -------- | ---------- |
-| Admin | Admin    | \*\*\*\*\* |
+| Role  | Username | Password |
+| ----- | -------- | -------- |
+| Admin | Admin    | (see DB) |
 
-> *Note:* The admin account is pre-configured in the database with a secure, hashed password. For production use, change the default admin password immediately after first login.
+* **Admin password is hashed. Change it after first login.**
 
 ---
 
@@ -168,260 +204,265 @@ Key directories and files:
 
 ### Prerequisites
 
-* Node.js (v14 or above)
+* [Node.js v14+](https://nodejs.org/)
 * npm (comes with Node.js)
-* Python 3 (v3.8 or above)
-* MySQL (v8.0 or above)
-* Git
+* [Python 3.8+](https://python.org/)
+* [MySQL 8.0+](https://dev.mysql.com/)
+* [Git](https://git-scm.com/)
+
+---
 
 ### Database Setup
 
-Start MySQL and create the database:
+1. **Start MySQL.**
+2. **In a terminal:**
 
-```bash
-mysql -u root -p
-```
+   ```bash
+   mysql -u root -p
+   ```
+3. **Inside MySQL:**
 
-Inside MySQL shell, create and use the database:
+   ```sql
+   CREATE DATABASE therapy_clinic;
+   USE therapy_clinic;
+   SOURCE /path/to/database/therapy_clinic.sql;
+   ```
 
-```sql
-CREATE DATABASE therapy_clinic;
-USE therapy_clinic;
-```
+   (Adjust path to match your folder.)
 
-Run the provided schema file:
-
-```bash
-mysql -u root -p therapy_clinic < database/schema.sql
-```
-
-Optionally, seed the database with initial data:
-
-```bash
-mysql -u root -p therapy_clinic < database/seed.sql
-```
+---
 
 ### Backend Setup
 
-Clone the Repository:
+1. **Go to backend folder:**
 
-```bash
-git clone https://github.com/nubpz/Group4.git
-cd Group4
-```
+   ```bash
+   cd backend
+   ```
+2. **Install dependencies:**
 
-Create and Activate a Virtual Environment:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **Install spaCy model:**
 
-```bash
-# On macOS/Linux
-python3 -m venv venv
-source venv/bin/activate
+   ```bash
+   python -m spacy download en_core_web_sm
+   ```
+4. **Email Environment Variables:**
+   Create `.env` file in `backend/`:
 
-# On Windows
-python -m venv venv
-venv\Scripts\activate
-```
+   ```env
+   EMAIL_USER=your_email@gmail.com
+   EMAIL_PASS=your_gmail_app_password
+   ```
 
-Navigate to Backend Directory:
+   * [Generate an app password with Gmail](https://support.google.com/accounts/answer/185833).
+   * **Never commit `.env` to GitHub.**
+5. **No need to set DB credentials in `.env` (they are hardcoded in `app.py`).**
 
-```bash
-cd backend
-```
-
-Install Backend Dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Configure Database Connection:
-
-Edit the database connection parameters in `app.py` or create a `.env` file with your database credentials:
-
-```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=therapy_clinic
-```
+---
 
 ### Frontend Setup
 
-Navigate to the Frontend Directory:
+1. **Go to frontend folder:**
 
-```bash
-cd ../frontend
-```
+   ```bash
+   cd ../frontend
+   ```
+2. **Install frontend dependencies:**
 
-Install Frontend Dependencies:
+   ```bash
+   npm install
+   ```
+3. **(Optional) Set backend API URL:**
+   If your backend URL changes, create `.env`:
 
-```bash
-npm install
-```
+   ```env
+   REACT_APP_API_URL=http://localhost:5000
+   ```
 
-Configure API Endpoint:
+---
 
-Create a `.env.local` file in the frontend directory:
+## Environment Variables & Security
 
-```env
-REACT_APP_API_URL=http://localhost:5000/api
-```
+* **Never commit sensitive files:**
+  `.env` should be in your `.gitignore`.
+  Only share `.env.example` (with placeholders) if needed.
+* **Using Gmail app password:**
+  Visit your Google account settings to generate a secure app password for email sending.
+* **Reference in Python code:**
+
+  ```python
+  import os
+  EMAIL_USER = os.getenv('EMAIL_USER')
+  EMAIL_PASS = os.getenv('EMAIL_PASS')
+  ```
 
 ---
 
 ## Running the Application
 
-Start the Backend Server:
+### 1. **Start MySQL service.**
+
+### 2. **Start backend (Flask):**
 
 ```bash
-# Make sure you're in the backend directory with the virtual environment activated
 cd backend
 python app.py
 ```
 
-The backend server will start on `http://localhost:5000`
+* Backend will run at: [http://localhost:5000](http://localhost:5000)
 
-Start the Frontend Development Server:
+### 3. **Start frontend (React):**
 
 ```bash
-# In a new terminal window/tab
 cd frontend
 npm start
 ```
 
-The frontend development server will start on `http://localhost:3000`
-
-Access the Application:
-
-Open your browser and navigate to `http://localhost:3000`
-Log in using the default credentials mentioned above.
+* Frontend will run at: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Pulling Latest Changes
+## Navigating the Application
 
-To update your local repository with the latest changes:
+* **Login Page:** Choose user type, enter credentials.
+* **Dashboard:**
 
-```bash
-# Navigate to the project directory
-cd Group4
-
-# Fetch the latest changes
-git fetch origin
-
-# Pull the latest changes
-git pull origin main
-
-# Update dependencies (if needed)
-cd backend
-pip install -r requirements.txt
-
-cd ../frontend
-npm install
-```
+  * Parent: See/select children, book or manage appointments.
+  * Student: View/book appointments.
+  * Therapist: Set availability, see bookings, update status.
+  * Admin: Full management interface.
+* **Chatbot:** Accessible from dashboard; use natural language (e.g., "Book with Dr. Smith next Tuesday").
+* **Email Alerts:** Sent for appointment confirmations and changes.
 
 ---
 
 ## API Documentation
 
-### Authentication Endpoints
+* `POST /api/auth/login` — Login, receive JWT
 
-* `POST /api/auth/login` - User login
-* `POST /api/auth/register` - User registration
-* `GET /api/auth/validate` - Validate JWT token
+* `POST /api/auth/register` — Register new account
 
-### Parent Endpoints
+* `GET /api/parents/appointments` — List appointments for children
 
-* `GET /api/parents/appointments` - Get appointments for parent's children
-* `POST /api/parents/appointments` - Schedule new appointment
+* `POST /api/parents/appointments` — Book new appointment
 
-### Student Endpoints
+* `GET /api/students/appointments` — List student’s appointments
 
-* `GET /api/students/appointments` - Get student's appointments
-* `POST /api/students/appointments` - Schedule appointment
+* `POST /api/students/appointments` — Book as student
 
-### Doctor/Therapist Endpoints
+* `GET /api/therapists/availability` — Therapist views/sets slots
 
-* `GET /api/doctors/availability` - Get doctor's availability
-* `POST /api/doctors/availability` - Set availability
-* `GET /api/doctors/appointments` - Get doctor's appointments
+* `POST /api/therapists/availability` — Update availability
 
-### Admin Endpoints
+* `GET /api/therapists/appointments` — Therapist’s appointments
 
-* `GET /api/admin/users` - Get all users
-* `POST /api/admin/users` - Create new user
-* `PUT /api/admin/users/:id` - Update user
-* `DELETE /api/admin/users/:id` - Delete user
+* `GET /api/admin/users` — All users (admin only)
+
+* `POST /api/admin/users` — Create user (admin only)
+
+* `PUT /api/admin/users/:id` — Update user
+
+* `DELETE /api/admin/users/:id` — Delete user
+
+* **Chatbot endpoints:**
+
+  * `/chatbot/start`
+  * `/chatbot/interact`
+
+(See backend route files for all parameters and request/response examples.)
 
 ---
 
 ## User Guides
 
-### For Parents
+### Parent
 
-* Log in using your credentials
-* View your children's appointments
-* Schedule new appointments by selecting available time slots
-* Manage existing appointments
+* Log in, select a child, view and book appointments.
+* Manage/cancel bookings.
+* Use the chatbot for quick scheduling.
 
-### For Students
+### Student
 
-* Log in using your credentials
-* View your scheduled appointments
-* Request new appointments
+* Log in, see upcoming sessions, book/cancel appointments.
+* Check notifications for changes.
 
-### For Doctors/Therapists
+### Therapist
 
-* Log in using your credentials
-* Set your availability for appointments
-* View and manage scheduled appointments
-* Update appointment status
+* Set/update your available days and times.
+* View your appointments for the week.
+* Change appointment status (completed/cancelled).
+* Update location for in-person visits.
 
-### For Admins
+### Admin
 
-* Log in using admin credentials
-* Manage all users and appointments
-* Configure system settings
+* Manage all users, appointments, therapist info.
+* View full clinic statistics and system logs.
+
+### Chatbot
+
+* Click the chatbot icon.
+* Type sentences like:
+
+  * “Book with Dr. Smith next Friday”
+  * “Cancel my appointment on June 10”
+  * “Reschedule my next session”
+* The chatbot will guide you step by step.
 
 ---
 
 ## Contributing
 
-* Fork the repository
-* Create a feature branch: `git checkout -b feature-name`
-* Commit your changes: `git commit -m 'Add some feature'`
-* Push to the branch: `git push origin feature-name`
-* Submit a pull request
+1. Fork this repo
+2. Create a branch: `git checkout -b feature/my-feature`
+3. Make changes, commit: `git commit -am "Describe your feature"`
+4. Push: `git push origin feature/my-feature`
+5. Open a pull request with a summary of your changes
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
+### Backend not starting?
 
-**Backend server won't start:**
+* Ensure Python 3.8+ is installed
+* All pip dependencies installed
+* MySQL is running, schema loaded
 
-* Check if the correct Python version is installed
-* Verify that all dependencies are installed
-* Confirm database connection parameters are correct
+### Frontend not starting?
 
-**Frontend development server issues:**
-
+* Try deleting `node_modules` and run `npm install` again
 * Clear npm cache: `npm cache clean --force`
-* Delete `node_modules` and reinstall: `rm -rf node_modules && npm install`
 
-**Database connection errors:**
+### Database connection issues?
 
-* Verify MySQL service is running
-* Check database credentials
-* Ensure database and tables exist
+* Check your DB is running and schema matches your models
 
-### Getting Help
+### Email not sending?
 
-If you encounter any issues not covered in this troubleshooting section, please:
+* Check `.env` exists and uses correct Gmail app password
+* Make sure less secure app access is enabled for your Google account (if needed)
 
-* Check existing GitHub issues
-* Create a new issue with detailed information about the problem
-* Contact the project maintainers at \[team email or contact method]
+### Chatbot errors?
 
-© 2023-2025 Therapy Appointment Scheduler Team - Group 4
+* Ensure you ran `python -m spacy download en_core_web_sm`
+* Check backend logs for NLP/model errors
+
+**For other issues:**
+
+* Open an Issue on GitHub with details, logs, and screenshots.
+
+---
+
+## Credits & License
+
+© 2023–2025 Therapy Appointment Scheduler Team – Group 4
+This project is open source for educational use.
+
+---
+
+**Tip:**
+Update this README as your app evolves!
+Add new screenshots to the `images/` directory and update links above.

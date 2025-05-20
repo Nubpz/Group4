@@ -1,3 +1,4 @@
+// src/pages/HomeTab.js
 import React, { useState } from "react";
 
 export default function HomeTab({
@@ -37,6 +38,16 @@ export default function HomeTab({
         day: "numeric",
       })
     : "None";
+
+  // State for appointment details modal
+  const [showAppointmentDetails, setShowAppointmentDetails] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+  // Handler to open appointment details modal
+  const handleAppointmentClick = (appointment) => {
+    setSelectedAppointment(appointment);
+    setShowAppointmentDetails(true);
+  };
 
   const normalizeDate = (dateString) => {
     const [year, month, day] = dateString.split("-").map(Number);
@@ -189,7 +200,12 @@ export default function HomeTab({
             ) : (
               <div className="appointments-list">
                 {upcoming.slice(0, 5).map((app) => (
-                  <div key={app.id} className="appointment-card">
+                  <div
+                    key={app.id}
+                    className="appointment-card"
+                    onClick={() => handleAppointmentClick(app)}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="appointment-header">
                       <h4>{app.child_name}</h4>
                       <span>{app.status}</span>
@@ -221,6 +237,76 @@ export default function HomeTab({
           </div>
         </div>
       </section>
+
+      {/* Appointment Details Modal */}
+      {showAppointmentDetails && selectedAppointment && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowAppointmentDetails(false)}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "500px", padding: "20px" }}
+          >
+            <h2>Appointment Details</h2>
+            <div className="appointment-details">
+              <p>
+                <strong>Child:</strong> {selectedAppointment.child_name}
+              </p>
+              <p>
+                <strong>Date:</strong>{" "}
+                {new Date(selectedAppointment.appointment_time).toLocaleDateString()}
+              </p>
+              <p>
+                <strong>Time:</strong>{" "}
+                {new Date(selectedAppointment.appointment_time).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </p>
+              <p>
+                <strong>Therapist:</strong> {selectedAppointment.therapist_name}
+              </p>
+              <p>
+                <strong>Type:</strong>{" "}
+                {selectedAppointment.appointment_type === "virtual" ? "Online" : "In-Person"}
+              </p>
+              {selectedAppointment.appointment_type === "virtual" &&
+                selectedAppointment.meeting_link && (
+                  <p>
+                    <strong>Meeting Link:</strong>{" "}
+                    <a
+                      href={selectedAppointment.meeting_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {selectedAppointment.meeting_link}
+                    </a>
+                  </p>
+                )}
+              {selectedAppointment.reasonForMeeting && (
+                <p>
+                  <strong>Reason for Visit:</strong>{" "}
+                  {selectedAppointment.reasonForMeeting}
+                </p>
+              )}
+              <p>
+                <strong>Status:</strong> {selectedAppointment.status}
+              </p>
+            </div>
+            <div className="modal-actions">
+              <button
+                className="modal-btn cancel-btn"
+                onClick={() => setShowAppointmentDetails(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* My Children */}
       <section className="children-section">

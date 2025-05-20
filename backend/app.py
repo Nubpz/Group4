@@ -15,12 +15,12 @@ import json
 
 
 # Import route modules
-from auth_routes import register_routes as auth_routes
-from admin_routes import register_routes as admin_routes
-from therapist_routes import register_routes as therapist_routes
-from parent_routes import register_routes as parent_routes
-from student_routes import register_routes as student_routes
-from chatbot_routes import register_routes as chatbot_routes
+from routes.authenticationRoute.auth_routes import register_routes as auth_routes
+from routes.adminRoute.admin_routes import register_routes as admin_routes
+from routes.therapistRoute.therapist_routes import register_routes as therapist_routes
+from routes.parentRoute.parent_routes import register_routes as parent_routes
+from routes.studentRoute.student_routes import register_routes as student_routes
+from routes.chatBotRoute.chatbot_routes import register_routes as chatbot_routes
 
 load_dotenv()    
 app = Flask(__name__)

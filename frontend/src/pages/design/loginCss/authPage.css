@@ -1,0 +1,525 @@
+/* src/components/design/authPage.css */
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.logo {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10; /* Ensures the logo stays on top of other elements */
+}
+
+/* Auth container - full screen layout */
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 30px; /* Increased padding for better spacing */
+  background-color: #f0f4f8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.auth-container.dark-mode {
+  background-color: #2a2f3b; /* Warmer dark background */
+}
+
+/* Dark Mode Toggle */
+.dark-mode-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #333; /* Dark text in light mode */
+  border: none;
+  border-radius: 25px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.auth-container.dark-mode .dark-mode-toggle {
+  color: #fff; /* White text in dark mode */
+}
+
+.dark-mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Card container for auth form */
+.auth-card {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  text-align: center;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.auth-card.dark-mode {
+  background-color: #3a4350;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  border: 1px solid #4a5568;
+}
+
+/* Form heading */
+.auth-card h2 {
+  color: #2d6a4f;
+  margin-bottom: 25px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.auth-card.dark-mode h2 {
+  color: #d1d5db;
+}
+
+/* Error and success messages */
+.error, .message {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.error {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.message {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.auth-container.dark-mode .error {
+  background-color: #4b2e2e;
+  color: #ef9a9a;
+}
+
+.auth-container.dark-mode .message {
+  background-color: #2e4b2e;
+  color: #a5d6a7;
+}
+
+/* Form styles */
+form {
+  text-align: left;
+}
+
+/* Input group styles - consistent for all form fields */
+.input-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.auth-container.dark-mode label {
+  color: #d1d5db;
+}
+
+/* Consistent styles for all input types */
+.input-group input,
+.input-group select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fff;
+  color: #333;
+  height: 45px;
+}
+
+/* Apply to all inputs within .auth-container.dark-mode */
+.auth-container.dark-mode input,
+.auth-container.dark-mode select {
+  background-color: #fff; /* White background in dark mode */
+  border: 1px solid #81c784; /* Subtle green border for contrast */
+  color: #333; /* Dark text for contrast */
+}
+
+/* Placeholder styles */
+.input-group input::placeholder,
+.input-group select::placeholder {
+  color: #999;
+}
+
+.auth-container.dark-mode input::placeholder,
+.auth-container.dark-mode select::placeholder {
+  color: #666; /* Slightly darker placeholder for contrast on white background */
+}
+
+/* For password fields, add some right padding to make room for the icon */
+.password-group input {
+  padding-right: 45px;
+}
+
+/* Focus styles */
+.input-group input:focus,
+.input-group select:focus {
+  border-color: #52b788;
+  box-shadow: 0 0 5px rgba(82, 183, 136, 0.3);
+  outline: none;
+}
+
+.auth-container.dark-mode input:focus,
+.auth-container.dark-mode select:focus {
+  border-color: #66bb6a;
+  box-shadow: 0 0 5px rgba(129, 199, 132, 0.3);
+}
+
+/* Password input group specific styles */
+.password-group {
+  position: relative;
+}
+
+/* Improved icon positioning */
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  margin-top: 10px;
+}
+
+/* Checkbox styling */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-group input {
+  width: 16px; /* Reduced size */
+  height: 16px;
+  margin: 0;
+}
+
+.checkbox-group label {
+  font-size: 14px;
+  color: #333;
+}
+
+.auth-container.dark-mode .checkbox-group label {
+  color: #d1d5db;
+}
+
+/* Password Strength Meter */
+.password-strength {
+  margin-top: 10px;
+}
+
+.strength-bar {
+  height: 5px;
+  width: 100%;
+  background: #e5e7eb;
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.strength-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.strength-0::before { width: 0%; background: #c62828; }
+.strength-1::before { width: 25%; background: #c62828; }
+.strength-2::before { width: 50%; background: #f57c00; }
+.strength-3::before { width: 75%; background: #2e7d32; }
+.strength-4::before { width: 100%; background: #1b5e20; }
+
+.password-strength p {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #333;
+}
+
+.auth-container.dark-mode .password-strength p {
+  color: #d1d5db;
+}
+
+.auth-container.dark-mode .strength-bar {
+  background: #6b7280;
+}
+
+/* Password Match Indicator */
+.password-match {
+  margin-top: 10px;
+  margin-bottom: 20px; /* Added margin below for spacing */
+}
+
+.match-success {
+  color: #2e7d32;
+  font-size: 12px;
+}
+
+.match-error {
+  color: #c62828;
+  font-size: 12px;
+}
+
+.auth-container.dark-mode .match-success {
+  color: #a5d6a7;
+}
+
+.auth-container.dark-mode .match-error {
+  color: #ef9a9a;
+}
+
+/* Forgot password link - Centered */
+.forgot-password {
+  text-align: center;
+  margin: 15px 0;
+}
+
+.forgot-password span {
+  color: #52b788;
+  cursor: pointer;
+  transition: color 0.3s;
+  font-size: 14px;
+}
+
+.auth-container.dark-mode .forgot-password span {
+  color: #81c784;
+}
+
+.forgot-password span:hover {
+  text-decoration: underline;
+  color: #40916c;
+}
+
+.auth-container.dark-mode .forgot-password span:hover {
+  color: #66bb6a;
+}
+
+/* Divider line */
+.divider {
+  border-top: 1px solid #e0e0e0;
+  margin: 25px 0;
+}
+
+.auth-container.dark-mode .divider {
+  border-top: 1px solid #6b7280;
+}
+
+/* Reset instructions */
+.reset-instructions {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.auth-container.dark-mode .reset-instructions {
+  color: #9ca3af;
+}
+
+/* Login button */
+.login-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #52b788;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  height: 45px;
+  position: relative;
+}
+
+.login-button:hover {
+  background-color: #40916c;
+}
+
+.auth-container.dark-mode .login-button {
+  background-color: #81c784;
+}
+
+.auth-container.dark-mode .login-button:hover {
+  background-color: #66bb6a;
+}
+
+/* Register button */
+.register-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #40916c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  height: 45px;
+  display: block;
+  text-align: center;
+  margin: 15px 0;
+  text-decoration: none;
+}
+
+.register-button:hover {
+  background-color: #2d6a4f;
+}
+
+.auth-container.dark-mode .register-button {
+  background-color: #66bb6a;
+}
+
+.auth-container.dark-mode .register-button:hover {
+  background-color: #4caf50;
+}
+
+/* Loading Spinner */
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Role selection modal styles */
+.role-selection-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.role-selection-content {
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+}
+
+.auth-container.dark-mode .role-selection-content {
+  background-color: #3a4350;
+}
+
+.role-selection-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #2d6a4f;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.auth-container.dark-mode .role-selection-content h3 {
+  color: #d1d5db;
+}
+
+.role-selection-content p {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 14px;
+}
+
+.auth-container.dark-mode .role-selection-content p {
+  color: #9ca3af;
+}
+
+.role-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.role-buttons button {
+  padding: 12px 15px;
+  background-color: #52b788;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  font-weight: 500;
+  height: 45px;
+}
+
+.role-buttons button:hover {
+  background-color: #40916c;
+}
+
+.auth-container.dark-mode .role-buttons button {
+  background-color: #81c784;
+}
+
+.auth-container.dark-mode .role-buttons button:hover {
+  background-color: #66bb6a;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 20px;
+  }
+
+  .auth-card {
+    padding: 20px;
+  }
+  
+  .role-selection-content {
+    width: 85%;
+    padding: 20px;
+  }
+}

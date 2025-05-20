@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import './design/authPage.css';
+import '../design/loginCss/authPage.css';
 
 const ResetPasswordPage = () => {
   const [values, setValues] = useState({

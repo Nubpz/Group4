@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
-import './design/authPage.css';
+import '../design/loginCss/authPage.css';
 
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./design/TDashboard.css"; // Adjust path based on your structure
+import "../design/therapistPageCss/TDashboard.css"; // Adjust path based on your structure
 
 const TDashboard = ({ therapistInfo }) => {
   const [appointments, setAppointments] = useState([]);

@@ -1,6 +1,6 @@
 // src/pages/AdminPage/AdminPage.js
 import React, { useEffect, useState } from "react";
-import "../design/adminPage.css";
+import "../design/adminCss/adminPage.css";
 import HomeTab from "./HomeTab";
 import ParentsTab from "./ParentsTab";
 import StudentsTab from "./StudentsTab";

@@ -1,8 +1,9 @@
+// src/pages/ParentPage.js
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import "../design/parentsPage.css";
+import "../design/parentCss/parentsPage.css";
 
 import HomeTab from "./HomeTab";
 import AccountsTab from "./AccountsTab";
@@ -124,6 +125,8 @@ const ParentPage = () => {
   const [profileMessage, setProfileMessage] = useState({ type: "", message: "" });
   const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
   const [showProfileCompleteModal, setShowProfileCompleteModal] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [locationSuccess, setLocationSuccess] = useState("");
 
   // ─────────── modals & form state ───────────
   const [showModal, setShowModal] = useState(false);
@@ -621,6 +624,53 @@ const ParentPage = () => {
     }
   };
 
+  // ───────── Location handler ─────────
+  const handleSetLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLocationError("No token found. Please log in again.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log("Geolocation coordinates:", { latitude, longitude });
+        try {
+          const res = await fetch("http://localhost:3000/user/location", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ latitude, longitude }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.message || "Failed to update location");
+          }
+          setLocationSuccess("Location updated successfully!");
+          setLocationError("");
+          setProfile({ ...profile, latitude, longitude });
+          setTimeout(() => setLocationSuccess(""), 3000);
+        } catch (err) {
+          console.error("Error updating location:", err);
+          setLocationError(err.message);
+          setLocationSuccess("");
+        }
+      },
+      (err) => {
+        setLocationError(`Geolocation error: ${err.message}`);
+        setLocationSuccess("");
+      }
+    );
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
@@ -871,6 +921,8 @@ const ParentPage = () => {
                 {profileMessage.message}
               </p>
             )}
+            {locationError && <p className="error">{locationError}</p>}
+            {locationSuccess && <p className="message">{locationSuccess}</p>}
             {profile ? (
               <div className="profile-container">
                 {/* Profile Header */}
@@ -923,6 +975,14 @@ const ParentPage = () => {
                             <span className="info-value">{profile.phone_number}</span>
                           </div>
                         )}
+                        <div className="profile-info-item">
+                          <span className="info-label">Location</span>
+                          <span className="info-value">
+                            {profile.latitude && profile.longitude
+                              ? `${profile.latitude}, ${profile.longitude}`
+                              : "Not set"}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <div className="account-actions">
@@ -933,6 +993,23 @@ const ParentPage = () => {
                         </button>
                         <button className="change-password-btn" onClick={handleChangePasswordClick}>
                           Change Password
+                        </button>
+                        <button className="set-location-btn" onClick={handleSetLocation}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                          </svg>
+                          Set my Location
                         </button>
                         <button className="logout-btn" onClick={handleLogout}>
                           Logout
@@ -1146,7 +1223,7 @@ const ParentPage = () => {
                 <input
                   type="date"
                   name="dateOfBirth"
-                  value={newChild.dateOfBirth}
+                  value={newChild.date_of_birth}
                   onChange={handleChildInputChange}
                   required
                 />
